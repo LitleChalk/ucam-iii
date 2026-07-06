@@ -52,6 +52,7 @@ private:
 
     QHBoxLayout *page1_layout, *auto_request_layout;
     QVBoxLayout
+        *main_layout,
         *page2_layout,
         *control_layout,
         *buttons_layout,

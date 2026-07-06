@@ -4,6 +4,14 @@ Widget::Widget(QWidget *parent)
     : QWidget(parent)
 
 {
+    const int window_start_width = 1200;
+    const int window_start_height = 700;
+
+    const int control_min_width = 300;
+    const double control_max_percent = 0.5;
+
+    const int switch_button_margin = 5;
+
     stacked_widget = new QStackedWidget(this);
 
     page1 = new QWidget(this);
@@ -18,6 +26,7 @@ Widget::Widget(QWidget *parent)
     buttons_section = new QWidget(control_section);
     info_section = new QWidget(control_section);
     //разметка
+    main_layout = new QVBoxLayout(this);
     page1_layout = new QHBoxLayout(page1);
     photo_layout = new QVBoxLayout(photo_section);
     control_layout = new QVBoxLayout(control_section);
@@ -47,6 +56,8 @@ Widget::Widget(QWidget *parent)
     //сборка
     stacked_widget->addWidget(page1);
     stacked_widget->addWidget(page2);
+    main_layout->addWidget(stacked_widget);
+    main_layout->setContentsMargins(0, 0, 0, 0);
 
     page1_layout->addWidget(photo_section);
     page1_layout->addWidget(control_section);
@@ -75,23 +86,37 @@ Widget::Widget(QWidget *parent)
     //параметры рамки
     photo_frame->setFrameShape(QFrame::Box);
     photo_frame->setLineWidth(3);
-    photo_frame->setFixedSize(250, 250);
     //параметры фото
     photo_label->setAlignment(Qt::AlignCenter);
     photo_label->setScaledContents(true);
-    photo_label->setFixedSize(photo_frame->size());
     //параметры кнопок
     start_auto_request->setText("Старт");
-    start_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     stop_auto_request->setText("Стоп");
-    stop_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     photo_request->setText("Запросить фото");
     load_info->setText("Загрузить информацию");
     change_info->setText("Редактировать");
     save_info->setText("Сохранить");
-    //параметры инфо
-    //info_grid->setHorizontalSpacing(5);
-    //number_value->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    switch_windows->setText("вв");
+    //параметры размеров
+    //start_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    //stop_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    resize(window_start_width, window_start_height);
+    stacked_widget->setSizePolicy(
+        QSizePolicy::Expanding,
+        QSizePolicy::Expanding
+        );
+    control_section->setMinimumWidth(control_min_width);
+    //control_section->setMaximumWidth(width() * control_max_percent);
+    photo_section->setSizePolicy(
+        QSizePolicy::Expanding,
+        QSizePolicy::Expanding
+        );
+    photo_frame->setMinimumSize(250, 250);
+    photo_frame->setSizePolicy(
+        QSizePolicy::Expanding,
+        QSizePolicy::Expanding
+        );
+    switch_windows->adjustSize();
 }
 
 Widget::~Widget() = default;
