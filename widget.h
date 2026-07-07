@@ -9,6 +9,16 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QFrame>
+#include <QResizeEvent>
+
+const double control_max_percent = 20;
+
+const int window_start_width = 1200;
+const int window_start_height = 700;
+
+const int control_min_width = 300;
+
+const int switch_button_margin = 5;
 
 class Widget : public QWidget
 {
@@ -59,6 +69,9 @@ private:
         *info_layout,
         *photo_layout;
     QGridLayout *info_grid;
+    QPixmap original_photo;
+protected:
+    void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // WIDGET_H

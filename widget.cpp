@@ -4,14 +4,6 @@ Widget::Widget(QWidget *parent)
     : QWidget(parent)
 
 {
-    const int window_start_width = 1200;
-    const int window_start_height = 700;
-
-    const int control_min_width = 300;
-    const double control_max_percent = 0.5;
-
-    const int switch_button_margin = 5;
-
     stacked_widget = new QStackedWidget(this);
 
     page1 = new QWidget(this);
@@ -37,6 +29,8 @@ Widget::Widget(QWidget *parent)
     //элементы
     photo_frame = new QFrame(photo_section);
     photo_label = new QLabel(photo_frame);
+    photo_label->setGeometry(photo_frame->rect());
+    photo_label->setAlignment(Qt::AlignCenter);
 
     auto_title = new QLabel("Автоматический запрос");
     start_auto_request = new QPushButton(buttons_section);
@@ -59,10 +53,12 @@ Widget::Widget(QWidget *parent)
     main_layout->addWidget(stacked_widget);
     main_layout->setContentsMargins(0, 0, 0, 0);
 
-    page1_layout->addWidget(photo_section);
-    page1_layout->addWidget(control_section);
+    page1_layout->addWidget(photo_section, 100-control_max_percent);
+    page1_layout->addWidget(control_section, control_max_percent);
 
-    photo_layout->addWidget(photo_frame, 0, Qt::AlignCenter);
+    photo_layout->addWidget(photo_frame);//, 0, Qt::AlignCenter);
+    photo_layout->setContentsMargins(0, 0, 0, 0);
+    photo_layout->setSpacing(0);
 
     info_grid->addWidget(info_title,    0, 0);
     info_grid->addWidget(change_info,   0, 1);
@@ -76,7 +72,7 @@ Widget::Widget(QWidget *parent)
     control_layout->addWidget(buttons_section);
     control_layout->addWidget(info_section);
 
-    auto_request_layout->addWidget(auto_title);
+    auto_request_layout->addWidget(auto_title, 1);
     auto_request_layout->addWidget(start_auto_request);
     auto_request_layout->addWidget(stop_auto_request);
 
@@ -88,7 +84,7 @@ Widget::Widget(QWidget *parent)
     photo_frame->setLineWidth(3);
     //параметры фото
     photo_label->setAlignment(Qt::AlignCenter);
-    photo_label->setScaledContents(true);
+    //photo_label->setScaledContents(true);
     //параметры кнопок
     start_auto_request->setText("Старт");
     stop_auto_request->setText("Стоп");
@@ -96,16 +92,17 @@ Widget::Widget(QWidget *parent)
     load_info->setText("Загрузить информацию");
     change_info->setText("Редактировать");
     save_info->setText("Сохранить");
-    switch_windows->setText("вв");
+    switch_windows->setText("Страница");
     //параметры размеров
     //start_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     //stop_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     resize(window_start_width, window_start_height);
+    switch_windows->adjustSize();
+    buttons_layout->setContentsMargins(0, 13, 0, 0);
     stacked_widget->setSizePolicy(
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
         );
-    control_section->setMinimumWidth(control_min_width);
     //control_section->setMaximumWidth(width() * control_max_percent);
     photo_section->setSizePolicy(
         QSizePolicy::Expanding,
@@ -116,7 +113,29 @@ Widget::Widget(QWidget *parent)
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
         );
-    switch_windows->adjustSize();
+    control_section->setMinimumWidth(control_min_width);
+    start_auto_request->setMinimumWidth(60);
+    stop_auto_request->setMinimumWidth(60);
 }
-
+void Widget::resizeEvent(QResizeEvent *event)
+{
+    //подгон размеров фото рамки
+    QWidget::resizeEvent(event);
+    if (!original_photo.isNull())
+    {
+        photo_label->setPixmap(
+            original_photo.scaled(
+                photo_frame->size(),
+                Qt::KeepAspectRatio,
+                Qt::SmoothTransformation
+                )
+            );
+        photo_label->setGeometry(photo_frame->rect());
+    }
+    // смена страниц в правый верхний угол
+    switch_windows->move(
+        width() - switch_windows->width() - 5,
+        5
+        );
+}
 Widget::~Widget() = default;
