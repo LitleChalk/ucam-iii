@@ -10,7 +10,10 @@ Widget::Widget(QWidget *parent)
     page2 = new QWidget(this);
 
     switch_windows = new QPushButton(this);
+    connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
+
     // 1 стр
+    {
     //контейнеры
     photo_section = new QWidget(page1);
     control_section = new QWidget(page1);
@@ -56,7 +59,7 @@ Widget::Widget(QWidget *parent)
     page1_layout->addWidget(photo_section, 100-control_max_percent);
     page1_layout->addWidget(control_section, control_max_percent);
 
-    photo_layout->addWidget(photo_frame);//, 0, Qt::AlignCenter);
+    photo_layout->addWidget(photo_frame);
     photo_layout->setContentsMargins(0, 0, 0, 0);
     photo_layout->setSpacing(0);
 
@@ -84,7 +87,6 @@ Widget::Widget(QWidget *parent)
     photo_frame->setLineWidth(3);
     //параметры фото
     photo_label->setAlignment(Qt::AlignCenter);
-    //photo_label->setScaledContents(true);
     //параметры кнопок
     start_auto_request->setText("Старт");
     stop_auto_request->setText("Стоп");
@@ -94,8 +96,6 @@ Widget::Widget(QWidget *parent)
     save_info->setText("Сохранить");
     switch_windows->setText("Страница");
     //параметры размеров
-    //start_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    //stop_auto_request->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     resize(window_start_width, window_start_height);
     switch_windows->adjustSize();
     buttons_layout->setContentsMargins(0, 13, 0, 0);
@@ -103,7 +103,6 @@ Widget::Widget(QWidget *parent)
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
         );
-    //control_section->setMaximumWidth(width() * control_max_percent);
     photo_section->setSizePolicy(
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
@@ -116,6 +115,19 @@ Widget::Widget(QWidget *parent)
     control_section->setMinimumWidth(control_min_width);
     start_auto_request->setMinimumWidth(60);
     stop_auto_request->setMinimumWidth(60);
+    }
+    // 2 стр
+    settings_scroll = new QScrollArea(page2);
+    settings_scroll->setWidgetResizable(true);
+
+    QWidget *settings_content = new QWidget();
+    settings_scroll->setWidget(settings_content);
+
+    settings_layout = new QVBoxLayout(settings_content);
+}
+void Widget::ChangePage(){
+
+    stacked_widget->setCurrentIndex(abs(stacked_widget->currentIndex()-1));
 }
 void Widget::resizeEvent(QResizeEvent *event)
 {
