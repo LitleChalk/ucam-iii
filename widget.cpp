@@ -175,6 +175,7 @@ Widget::Widget(QWidget *parent)
     photo_format_combo = new QComboBox();
 
     save_settings_button = new QPushButton("Сохранить настройки");
+    set_default_settings_button =  new QPushButton("Установить стандартные настройки");
     //сборка
     settings_scroll->setWidgetResizable(true);
     settings_scroll->setWidget(settings_content);
@@ -224,11 +225,11 @@ Widget::Widget(QWidget *parent)
     photo_settings_grid->setColumnStretch(2, 1);
     photo_settings_grid->setHorizontalSpacing(15);
 
-    photo_settings_grid->addWidget(resolution_label,0,0);
-    photo_settings_grid->addWidget(resolution_combo,0,1);
+    photo_settings_grid->addWidget(photo_format_label,0,0);
+    photo_settings_grid->addWidget(photo_format_combo,0,1);
 
-    photo_settings_grid->addWidget(photo_format_label,1,0);
-    photo_settings_grid->addWidget(photo_format_combo,1,1);
+    photo_settings_grid->addWidget(resolution_label,1,0);
+    photo_settings_grid->addWidget(resolution_combo,1,1);
 
     photo_settings_layout->addWidget(photo_settings_title);
     photo_settings_layout->addLayout(photo_settings_grid);
@@ -239,6 +240,8 @@ Widget::Widget(QWidget *parent)
         );
     // сохранение
     save_settings_layout->addWidget(save_settings_button);
+    save_settings_layout->addSpacing(15);
+    save_settings_layout->addWidget(set_default_settings_button);
     // общая страница
     settings_layout->addWidget(object_info_section);
     settings_layout->addWidget(auto_mode_section);
@@ -284,8 +287,11 @@ Widget::Widget(QWidget *parent)
 
     resolution_combo->addItem("160x120");
 
-    photo_format_combo->addItem("raw");
+    photo_format_combo->addItem("raw, 8-bit for Y only");
+    photo_format_combo->addItem("raw, CrYCbY");
+    photo_format_combo->addItem("raw, 565(RGB)");
     photo_format_combo->addItem("jpeg");
+
     //параметры размеров
     settings_scroll->setSizePolicy(
         QSizePolicy::Expanding,
@@ -298,6 +304,7 @@ Widget::Widget(QWidget *parent)
     reset_id_combo->setMinimumWidth(150);
 
     save_settings_button->setMinimumHeight(30);
+    set_default_settings_button->setMinimumHeight(30);
     settings_scroll->setFrameShape(QFrame::NoFrame);
     }
 }
@@ -325,10 +332,13 @@ void Widget::resizeEvent(QResizeEvent *event)
     //Подключение кнопок
     connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
     connect(save_settings_button, &QPushButton::clicked, this,  &Widget::ChangeSettings);
+    connect(set_default_settings_button, &QPushButton::clicked, this,  &Widget::SetDefaultSettings);
+    connect(photo_format_combo,&QComboBox::currentTextChanged,this,&Widget::UpdateResolutionCombo);
 }
 void Widget::ChangePage(){
     int index=abs(stacked_widget->currentIndex()-1);
     stacked_widget->setCurrentIndex(index);
+    UpdateResolutionCombo();
     if (index==1)
         DisplayCurrentSettings();
 }
@@ -363,9 +373,9 @@ void Widget::ChangeSettings(){
 
     settings.sync();
 }
-void Widget::DisplayCurrentSettings()
+void Widget::DisplayCurrentSettings(const QString &fileName) // default fileName = "settings.ini"
 {
-    QSettings settings("settings.ini", QSettings::IniFormat);
+    QSettings settings(fileName, QSettings::IniFormat);
 
     if (settings.contains("camera_number"))
         camera_number_input->setText(settings.value("camera_number").toString());
@@ -376,13 +386,13 @@ void Widget::DisplayCurrentSettings()
     if (settings.contains("polling_frequency"))
         polling_frequency_input->setText(settings.value("polling_frequency").toString());
 
-    LoadComboBox(settings, "reset_ID", reset_id_combo);
-    LoadComboBox(settings, "tracked_objects", tracked_objects_combo);
-    LoadComboBox(settings, "data_format", data_format_combo);
-    LoadComboBox(settings, "resolution", resolution_combo);
-    LoadComboBox(settings, "format", photo_format_combo);
+    LoadComboFromSettings(settings, "reset_ID", reset_id_combo);
+    LoadComboFromSettings(settings, "tracked_objects", tracked_objects_combo);
+    LoadComboFromSettings(settings, "data_format", data_format_combo);
+    LoadComboFromSettings(settings, "resolution", resolution_combo);
+    LoadComboFromSettings(settings, "format", photo_format_combo);
 }
-void Widget::LoadComboBox(QSettings &settings, const QString &key, QComboBox *combo)
+void Widget::LoadComboFromSettings(QSettings &settings, const QString &key, QComboBox *combo)
 {
     if (!settings.contains(key))
         return;
@@ -392,5 +402,22 @@ void Widget::LoadComboBox(QSettings &settings, const QString &key, QComboBox *co
     if (index != -1)
         combo->setCurrentIndex(index);
 }
+void Widget::SetDefaultSettings(){
+    DisplayCurrentSettings("default_settings.ini");
+    ChangeSettings();
+}
+void Widget::UpdateResolutionCombo()
+{
+    resolution_combo->clear();
 
+    if (photo_format_combo->currentText() == "jpeg")
+    {
+        resolution_combo->addItems(jpegResolutions);
+    }
+    else    // raw
+    {
+        resolution_combo->addItems(rawResolutions);
+    }
+    resolution_combo->setCurrentIndex(0);
+}
 Widget::~Widget() = default;

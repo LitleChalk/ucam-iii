@@ -25,6 +25,19 @@ const int window_start_height = 700;
 const int control_min_width = 300;
 
 const int switch_button_margin = 5;
+const QStringList rawResolutions = {
+    "80x60",
+    "160x120",
+    "128x128",
+    "128x96"
+};
+
+const QStringList jpegResolutions = {
+    "160x128",
+    "320x240",
+    "640x480",
+    "128x96"
+};
 
 class Widget : public QWidget
 {
@@ -133,12 +146,15 @@ private:
         *photo_settings_grid;
 
     QPushButton
-        *save_settings_button;
+        *save_settings_button,
+        *set_default_settings_button;
 private slots:
     void ChangePage();
     void ChangeSettings();
-    void DisplayCurrentSettings();
-    void LoadComboBox(QSettings &settings, const QString &key, QComboBox *combo);
+    void DisplayCurrentSettings(const QString &fileName = "settings.ini");
+    void LoadComboFromSettings(QSettings &settings, const QString &key, QComboBox *combo);
+    void SetDefaultSettings();
+    void UpdateResolutionCombo();
 protected:
     void resizeEvent(QResizeEvent *event) override;
 };
