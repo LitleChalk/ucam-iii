@@ -13,6 +13,7 @@
 #include <QScrollArea>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QScrollBar>
 
 const double control_max_percent = 20;
 
@@ -52,8 +53,13 @@ private:
         *info_title,
         *number_label,
         *time_label,
+        *photo_id_label,
+        *cap_is_set_label,
         *number_value,
-        *time_value;
+        *time_value,
+        *photo_id_value,
+        *cap_is_set_value,
+        *info_changed;
 
     QFrame *photo_frame;
     QLabel *photo_label;
@@ -94,14 +100,25 @@ private:
     QLabel
         *camera_number_label,
         *batch_number_label,
-        *reset_frequency_label;
+        *reset_frequency_label,
+        *polling_frequency_label,
+        *save_objects_label,
+        //*tracked_objects_label,
+        //*data_type_label,
+        *resolution_label,
+        *format_label;
 
     QLineEdit
         *camera_number_input,
-        *batch_number_input;
+        *batch_number_input,
+        *polling_frequency_input;
 
     QComboBox
-        *reset_frequency_combo;
+        *reset_frequency_combo,
+        *tracked_objects_combo,
+        *data_format_combo,
+        *resolution_combo,
+        *format_combo;
 
     QVBoxLayout
         *settings_layout,
@@ -110,7 +127,10 @@ private:
         *photo_settings_layout,
         *save_settings_layout;
 
-    QGridLayout *object_info_grid;
+    QGridLayout
+        *object_info_grid,
+        *auto_mode_grid,
+        *photo_settings_grid;
 
     QPushButton
         *save_settings_button;

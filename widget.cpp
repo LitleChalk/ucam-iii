@@ -45,14 +45,19 @@ Widget::Widget(QWidget *parent)
     save_info = new QPushButton(info_section);
 
     info_title = new QLabel("Инфо:");
-    number_label = new QLabel("№");
+    number_label = new QLabel("№ камеры");
     time_label = new QLabel("Время");
-
+    photo_id_label = new QLabel("ID снимка");
+    cap_is_set_label = new QLabel("Наличие крышки");
+    info_changed = new QLabel("Было произведено ручное изменение");
     number_value = new QLabel("-");
     time_value = new QLabel("-");
+    photo_id_value = new QLabel("-");
+    cap_is_set_value = new QLabel("-");
     //сборка
     stacked_widget->addWidget(page1);
     stacked_widget->addWidget(page2);
+    //main_layout->addWidget(switch_windows, 0, Qt::AlignRight);
     main_layout->addWidget(stacked_widget);
     main_layout->setContentsMargins(0, 0, 0, 0);
 
@@ -70,6 +75,11 @@ Widget::Widget(QWidget *parent)
     info_grid->addWidget(number_value,  1, 1, 1, 2);
     info_grid->addWidget(time_label,    2, 0);
     info_grid->addWidget(time_value,    2, 1, 1, 2);
+    info_grid->addWidget(photo_id_label,  3, 0);
+    info_grid->addWidget(photo_id_value,  3, 1, 1, 2);
+    info_grid->addWidget(cap_is_set_label,    4, 0);
+    info_grid->addWidget(cap_is_set_value,    4, 1, 1, 2);
+    info_grid->addWidget(info_changed,    5, 0,1,3);
     info_layout->addLayout(info_grid);
 
     control_layout->addWidget(buttons_section);
@@ -103,6 +113,10 @@ Widget::Widget(QWidget *parent)
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
         );
+    /*switch_windows->setSizePolicy(
+        QSizePolicy::Maximum,
+        QSizePolicy::Maximum
+        );*/
     photo_section->setSizePolicy(
         QSizePolicy::Expanding,
         QSizePolicy::Expanding
@@ -117,7 +131,7 @@ Widget::Widget(QWidget *parent)
     stop_auto_request->setMinimumWidth(60);
     }
     // 2 стр
-    //контейнеры
+    {//контейнеры
     settings_scroll = new QScrollArea(page2);
     settings_content = new QWidget();
 
@@ -135,18 +149,31 @@ Widget::Widget(QWidget *parent)
     save_settings_layout = new QVBoxLayout(save_settings_section);
 
     object_info_grid = new QGridLayout();
+    auto_mode_grid = new QGridLayout();
+    photo_settings_grid= new QGridLayout();
     //элементы
     object_info_title = new QLabel("Сохраняемая информация");
-    auto_mode_title = new QLabel("Автоматический режим");
-    photo_settings_title = new QLabel("Параметры фото");
-
     camera_number_label = new QLabel("Номер камеры");
     batch_number_label = new QLabel("Номер партии");
-    reset_frequency_label = new QLabel("Частота обнуления счетчика");
+    reset_frequency_label = new QLabel("Частота обнуления ID");
 
     camera_number_input = new QLineEdit();
     batch_number_input = new QLineEdit();
     reset_frequency_combo = new QComboBox();
+
+    auto_mode_title = new QLabel("Автоматический режим");
+    polling_frequency_label = new QLabel("Частота опроса (сек)");
+    save_objects_label = new QLabel("Сохраняемая информация");
+
+    polling_frequency_input = new QLineEdit();
+    tracked_objects_combo = new QComboBox();
+    data_format_combo = new QComboBox();
+
+    photo_settings_title = new QLabel("Параметры фото");
+    resolution_label = new QLabel("Разрешение");
+    format_label = new QLabel("Формат");
+    resolution_combo = new QComboBox();
+    format_combo = new QComboBox();
 
     save_settings_button = new QPushButton("Сохранить настройки");
     //сборка
@@ -154,6 +181,10 @@ Widget::Widget(QWidget *parent)
     settings_scroll->setWidget(settings_content);
     settings_content->setLayout(settings_layout);
     //параметры сохранения
+    object_info_grid->setAlignment(Qt::AlignLeft);
+    object_info_grid->setColumnStretch(2, 1);
+    object_info_grid->setHorizontalSpacing(15);
+
     object_info_grid->addWidget(camera_number_label, 0, 0);
     object_info_grid->addWidget(camera_number_input, 0, 1);
 
@@ -171,9 +202,42 @@ Widget::Widget(QWidget *parent)
         "}"
         );
     // параметры автоматического режима
+    auto_mode_grid->setAlignment(Qt::AlignLeft);
+    auto_mode_grid->setColumnStretch(3, 1);
+    auto_mode_grid->setHorizontalSpacing(15);
+
+    auto_mode_grid->addWidget(polling_frequency_label,0,0);
+    auto_mode_grid->addWidget(polling_frequency_input,0,1,1,2);
+
+    auto_mode_grid->addWidget(save_objects_label,1,0);
+    auto_mode_grid->addWidget(tracked_objects_combo,1,1);
+    auto_mode_grid->addWidget(data_format_combo,1,2);
+
     auto_mode_layout->addWidget(auto_mode_title);
+    auto_mode_layout->addLayout(auto_mode_grid);
+    auto_mode_section->setStyleSheet(
+        "QWidget {"
+        "border-bottom: 1px solid gray;"
+        "}"
+        );
     // параметры фото
+    photo_settings_grid->setAlignment(Qt::AlignLeft);
+    photo_settings_grid->setColumnStretch(2, 1);
+    photo_settings_grid->setHorizontalSpacing(15);
+
+    photo_settings_grid->addWidget(resolution_label,0,0);
+    photo_settings_grid->addWidget(resolution_combo,0,1);
+
+    photo_settings_grid->addWidget(format_label,1,0);
+    photo_settings_grid->addWidget(format_combo,1,1);
+
     photo_settings_layout->addWidget(photo_settings_title);
+    photo_settings_layout->addLayout(photo_settings_grid);
+    photo_settings_section->setStyleSheet(
+        "QWidget {"
+        "border-bottom: 1px solid gray;"
+        "}"
+        );
     // сохранение
     save_settings_layout->addWidget(save_settings_button);
     // общая страница
@@ -185,7 +249,7 @@ Widget::Widget(QWidget *parent)
     settings_content->setLayout(settings_layout);
 
     page2_layout->addWidget(settings_scroll);
-    //параметры заголовков
+    //параметры стилей (временное)
     object_info_title->setStyleSheet(
         "font-size: 18px;"
         "font-weight: bold;"
@@ -204,9 +268,21 @@ Widget::Widget(QWidget *parent)
     batch_number_label->setMinimumWidth(180);
     reset_frequency_label->setMinimumWidth(180);
     //параметры выпадающих списков
-    reset_frequency_combo->addItem("Каждый час");
+    reset_frequency_combo->addItem("Каждую партию");
     reset_frequency_combo->addItem("Каждый день");
-    reset_frequency_combo->addItem("Каждую неделю");
+
+    tracked_objects_combo->addItem("Все");
+    tracked_objects_combo->addItem("Успешные");
+    tracked_objects_combo->addItem("Бракованные");
+
+    data_format_combo->addItem("Инфо");
+    data_format_combo->addItem("Фото");
+    data_format_combo->addItem("Инфо+фото");
+
+    resolution_combo->addItem("160x120");
+
+    format_combo->addItem("raw");
+    format_combo->addItem("jpeg");
     //параметры размеров
     settings_scroll->setSizePolicy(
         QSizePolicy::Expanding,
@@ -220,6 +296,7 @@ Widget::Widget(QWidget *parent)
 
     save_settings_button->setMinimumHeight(30);
     settings_scroll->setFrameShape(QFrame::NoFrame);
+    }
 }
 void Widget::ChangePage(){
 
