@@ -10,7 +10,6 @@ Widget::Widget(QWidget *parent)
     page2 = new QWidget(this);
 
     switch_windows = new QPushButton(this);
-    connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
 
     // 1 стр
     {
@@ -155,11 +154,11 @@ Widget::Widget(QWidget *parent)
     object_info_title = new QLabel("Сохраняемая информация");
     camera_number_label = new QLabel("Номер камеры");
     batch_number_label = new QLabel("Номер партии");
-    reset_frequency_label = new QLabel("Частота обнуления ID");
+    reset_id_label = new QLabel("Частота обновления ID");
 
     camera_number_input = new QLineEdit();
     batch_number_input = new QLineEdit();
-    reset_frequency_combo = new QComboBox();
+    reset_id_combo = new QComboBox();
 
     auto_mode_title = new QLabel("Автоматический режим");
     polling_frequency_label = new QLabel("Частота опроса (сек)");
@@ -171,9 +170,9 @@ Widget::Widget(QWidget *parent)
 
     photo_settings_title = new QLabel("Параметры фото");
     resolution_label = new QLabel("Разрешение");
-    format_label = new QLabel("Формат");
+    photo_format_label = new QLabel("Формат");
     resolution_combo = new QComboBox();
-    format_combo = new QComboBox();
+    photo_format_combo = new QComboBox();
 
     save_settings_button = new QPushButton("Сохранить настройки");
     //сборка
@@ -191,8 +190,8 @@ Widget::Widget(QWidget *parent)
     object_info_grid->addWidget(batch_number_label, 1, 0);
     object_info_grid->addWidget(batch_number_input, 1, 1);
 
-    object_info_grid->addWidget(reset_frequency_label, 2, 0);
-    object_info_grid->addWidget(reset_frequency_combo, 2, 1);
+    object_info_grid->addWidget(reset_id_label, 2, 0);
+    object_info_grid->addWidget(reset_id_combo, 2, 1);
 
     object_info_layout->addWidget(object_info_title);
     object_info_layout->addLayout(object_info_grid);
@@ -228,8 +227,8 @@ Widget::Widget(QWidget *parent)
     photo_settings_grid->addWidget(resolution_label,0,0);
     photo_settings_grid->addWidget(resolution_combo,0,1);
 
-    photo_settings_grid->addWidget(format_label,1,0);
-    photo_settings_grid->addWidget(format_combo,1,1);
+    photo_settings_grid->addWidget(photo_format_label,1,0);
+    photo_settings_grid->addWidget(photo_format_combo,1,1);
 
     photo_settings_layout->addWidget(photo_settings_title);
     photo_settings_layout->addLayout(photo_settings_grid);
@@ -262,14 +261,18 @@ Widget::Widget(QWidget *parent)
         "font-size: 18px;"
         "font-weight: bold;"
         );
-
+    for (QGridLayout *grid : {photo_settings_grid, auto_mode_grid, object_info_grid})
+    {
+        grid->setColumnMinimumWidth(0, 200);
+        grid->setColumnStretch(0, 0);
+    }
     //параметры подписей
     camera_number_label->setMinimumWidth(180);
     batch_number_label->setMinimumWidth(180);
-    reset_frequency_label->setMinimumWidth(180);
+    reset_id_label->setMinimumWidth(180);
     //параметры выпадающих списков
-    reset_frequency_combo->addItem("Каждую партию");
-    reset_frequency_combo->addItem("Каждый день");
+    reset_id_combo->addItem("Каждую партию");
+    reset_id_combo->addItem("Каждый день");
 
     tracked_objects_combo->addItem("Все");
     tracked_objects_combo->addItem("Успешные");
@@ -281,8 +284,8 @@ Widget::Widget(QWidget *parent)
 
     resolution_combo->addItem("160x120");
 
-    format_combo->addItem("raw");
-    format_combo->addItem("jpeg");
+    photo_format_combo->addItem("raw");
+    photo_format_combo->addItem("jpeg");
     //параметры размеров
     settings_scroll->setSizePolicy(
         QSizePolicy::Expanding,
@@ -292,15 +295,11 @@ Widget::Widget(QWidget *parent)
     camera_number_input->setMinimumWidth(150);
     batch_number_input->setMinimumWidth(150);
 
-    reset_frequency_combo->setMinimumWidth(150);
+    reset_id_combo->setMinimumWidth(150);
 
     save_settings_button->setMinimumHeight(30);
     settings_scroll->setFrameShape(QFrame::NoFrame);
     }
-}
-void Widget::ChangePage(){
-
-    stacked_widget->setCurrentIndex(abs(stacked_widget->currentIndex()-1));
 }
 void Widget::resizeEvent(QResizeEvent *event)
 {
@@ -322,5 +321,76 @@ void Widget::resizeEvent(QResizeEvent *event)
         width() - switch_windows->width() - 5,
         5
         );
+
+    //Подключение кнопок
+    connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
+    connect(save_settings_button, &QPushButton::clicked, this,  &Widget::ChangeSettings);
 }
+void Widget::ChangePage(){
+    int index=abs(stacked_widget->currentIndex()-1);
+    stacked_widget->setCurrentIndex(index);
+    if (index==1)
+        DisplayCurrentSettings();
+}
+void Widget::ChangeSettings(){
+    QSettings settings("settings.ini", QSettings::IniFormat);
+    bool ok1;
+    int batch_number = this->batch_number_input->text().toInt(&ok1);
+
+    if (!ok1)
+    {
+        QMessageBox::warning(this,
+                             "Ошибка",
+                             "Номер партии должен быть целым числом.");
+        return;
+    }
+    int pollingFrequency = this->polling_frequency_input->text().toInt(&ok1);
+    if (!ok1)
+    {
+        QMessageBox::warning(this,
+                             "Ошибка",
+                             "Частота опроса должна быть целым числом.");
+        return;
+    }
+    settings.setValue("camera_number", this->camera_number_input->text());
+    settings.setValue("batch_number", batch_number);
+    settings.setValue("reset_ID", this->reset_id_combo->currentText());
+    settings.setValue("polling_frequency", pollingFrequency);
+    settings.setValue("tracked_objects", this->tracked_objects_combo->currentText());
+    settings.setValue("data_format", this->data_format_combo->currentText());
+    settings.setValue("resolution", this->resolution_combo->currentText());
+    settings.setValue("format", this->photo_format_combo->currentText());
+
+    settings.sync();
+}
+void Widget::DisplayCurrentSettings()
+{
+    QSettings settings("settings.ini", QSettings::IniFormat);
+
+    if (settings.contains("camera_number"))
+        camera_number_input->setText(settings.value("camera_number").toString());
+
+    if (settings.contains("batch_number"))
+        batch_number_input->setText(settings.value("batch_number").toString());
+
+    if (settings.contains("polling_frequency"))
+        polling_frequency_input->setText(settings.value("polling_frequency").toString());
+
+    LoadComboBox(settings, "reset_ID", reset_id_combo);
+    LoadComboBox(settings, "tracked_objects", tracked_objects_combo);
+    LoadComboBox(settings, "data_format", data_format_combo);
+    LoadComboBox(settings, "resolution", resolution_combo);
+    LoadComboBox(settings, "format", photo_format_combo);
+}
+void Widget::LoadComboBox(QSettings &settings, const QString &key, QComboBox *combo)
+{
+    if (!settings.contains(key))
+        return;
+
+    QString value = settings.value(key).toString();
+    int index = combo->findText(value);
+    if (index != -1)
+        combo->setCurrentIndex(index);
+}
+
 Widget::~Widget() = default;

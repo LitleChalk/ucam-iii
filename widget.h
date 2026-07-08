@@ -14,6 +14,8 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QScrollBar>
+#include <QSettings>
+#include <QMessageBox>
 
 const double control_max_percent = 20;
 
@@ -100,13 +102,11 @@ private:
     QLabel
         *camera_number_label,
         *batch_number_label,
-        *reset_frequency_label,
+        *reset_id_label,
         *polling_frequency_label,
         *save_objects_label,
-        //*tracked_objects_label,
-        //*data_type_label,
         *resolution_label,
-        *format_label;
+        *photo_format_label;
 
     QLineEdit
         *camera_number_input,
@@ -114,11 +114,11 @@ private:
         *polling_frequency_input;
 
     QComboBox
-        *reset_frequency_combo,
+        *reset_id_combo,
         *tracked_objects_combo,
         *data_format_combo,
         *resolution_combo,
-        *format_combo;
+        *photo_format_combo;
 
     QVBoxLayout
         *settings_layout,
@@ -136,6 +136,9 @@ private:
         *save_settings_button;
 private slots:
     void ChangePage();
+    void ChangeSettings();
+    void DisplayCurrentSettings();
+    void LoadComboBox(QSettings &settings, const QString &key, QComboBox *combo);
 protected:
     void resizeEvent(QResizeEvent *event) override;
 };
