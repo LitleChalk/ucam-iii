@@ -117,13 +117,109 @@ Widget::Widget(QWidget *parent)
     stop_auto_request->setMinimumWidth(60);
     }
     // 2 стр
+    //контейнеры
     settings_scroll = new QScrollArea(page2);
+    settings_content = new QWidget();
+
+    object_info_section = new QWidget(page2);
+    auto_mode_section = new QWidget(page2);
+    photo_settings_section = new QWidget(page2);
+    save_settings_section = new QWidget(page2);
+    //разметка
+    page2_layout = new QVBoxLayout(page2);
+
+    settings_layout = new QVBoxLayout();
+    object_info_layout = new QVBoxLayout(object_info_section);
+    auto_mode_layout = new QVBoxLayout(auto_mode_section);
+    photo_settings_layout = new QVBoxLayout(photo_settings_section);
+    save_settings_layout = new QVBoxLayout(save_settings_section);
+
+    object_info_grid = new QGridLayout();
+    //элементы
+    object_info_title = new QLabel("Сохраняемая информация");
+    auto_mode_title = new QLabel("Автоматический режим");
+    photo_settings_title = new QLabel("Параметры фото");
+
+    camera_number_label = new QLabel("Номер камеры");
+    batch_number_label = new QLabel("Номер партии");
+    reset_frequency_label = new QLabel("Частота обнуления счетчика");
+
+    camera_number_input = new QLineEdit();
+    batch_number_input = new QLineEdit();
+    reset_frequency_combo = new QComboBox();
+
+    save_settings_button = new QPushButton("Сохранить настройки");
+    //сборка
     settings_scroll->setWidgetResizable(true);
-
-    QWidget *settings_content = new QWidget();
     settings_scroll->setWidget(settings_content);
+    settings_content->setLayout(settings_layout);
+    //параметры сохранения
+    object_info_grid->addWidget(camera_number_label, 0, 0);
+    object_info_grid->addWidget(camera_number_input, 0, 1);
 
-    settings_layout = new QVBoxLayout(settings_content);
+    object_info_grid->addWidget(batch_number_label, 1, 0);
+    object_info_grid->addWidget(batch_number_input, 1, 1);
+
+    object_info_grid->addWidget(reset_frequency_label, 2, 0);
+    object_info_grid->addWidget(reset_frequency_combo, 2, 1);
+
+    object_info_layout->addWidget(object_info_title);
+    object_info_layout->addLayout(object_info_grid);
+    object_info_section->setStyleSheet(
+        "QWidget {"
+        "border-bottom: 1px solid gray;"
+        "}"
+        );
+    // параметры автоматического режима
+    auto_mode_layout->addWidget(auto_mode_title);
+    // параметры фото
+    photo_settings_layout->addWidget(photo_settings_title);
+    // сохранение
+    save_settings_layout->addWidget(save_settings_button);
+    // общая страница
+    settings_layout->addWidget(object_info_section);
+    settings_layout->addWidget(auto_mode_section);
+    settings_layout->addWidget(photo_settings_section);
+    settings_layout->addWidget(save_settings_section);
+
+    settings_content->setLayout(settings_layout);
+
+    page2_layout->addWidget(settings_scroll);
+    //параметры заголовков
+    object_info_title->setStyleSheet(
+        "font-size: 18px;"
+        "font-weight: bold;"
+        );
+    auto_mode_title->setStyleSheet(
+        "font-size: 18px;"
+        "font-weight: bold;"
+        );
+    photo_settings_title->setStyleSheet(
+        "font-size: 18px;"
+        "font-weight: bold;"
+        );
+
+    //параметры подписей
+    camera_number_label->setMinimumWidth(180);
+    batch_number_label->setMinimumWidth(180);
+    reset_frequency_label->setMinimumWidth(180);
+    //параметры выпадающих списков
+    reset_frequency_combo->addItem("Каждый час");
+    reset_frequency_combo->addItem("Каждый день");
+    reset_frequency_combo->addItem("Каждую неделю");
+    //параметры размеров
+    settings_scroll->setSizePolicy(
+        QSizePolicy::Expanding,
+        QSizePolicy::Expanding
+        );
+
+    camera_number_input->setMinimumWidth(150);
+    batch_number_input->setMinimumWidth(150);
+
+    reset_frequency_combo->setMinimumWidth(150);
+
+    save_settings_button->setMinimumHeight(30);
+    settings_scroll->setFrameShape(QFrame::NoFrame);
 }
 void Widget::ChangePage(){
 

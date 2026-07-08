@@ -78,7 +78,9 @@ private:
     //2 стр
     QScrollArea *settings_scroll;
 
+
     QWidget
+        *settings_content,
         *object_info_section,
         *auto_mode_section,
         *photo_settings_section,
@@ -108,10 +110,7 @@ private:
         *photo_settings_layout,
         *save_settings_layout;
 
-    QHBoxLayout
-        *camera_number_layout,
-        *batch_number_layout,
-        *reset_frequency_layout;
+    QGridLayout *object_info_grid;
 
     QPushButton
         *save_settings_button;
