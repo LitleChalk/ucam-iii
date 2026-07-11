@@ -103,3 +103,57 @@ bool Photo::saveToCsv()
 
     return true;
 }
+
+//------------------------------------------------ RAW ------------------------------------------------
+
+RawImage::RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel)
+{
+    width = Width;
+    height = Height;
+    bytesPerPixel = BytesPerPixel;
+    expectedSize = static_cast<size_t>(width) * height * bytesPerPixel;
+    buffer.resize(expectedSize);
+
+    received = 0;
+}
+
+// Возвращает false, если пакет не помещается.
+bool RawImage::addPacket(const uint8_t* data, size_t size)
+{
+    if (received + size > expectedSize)
+        return false;
+
+    std::memcpy(buffer.data() + received, data, size);
+    received += size;
+
+    return true;
+}
+
+bool RawImage::isComplete() const
+{
+    return received == expectedSize;
+}
+
+bool RawImage::SaveRawImage(const QString& path,
+                  const QString& fileName,
+                  const uint8_t* data,
+                  size_t size)
+{
+    QDir dir(path);
+
+    if (!dir.exists())
+        dir.mkpath(".");
+
+    QFile file(dir.filePath(fileName));
+
+    if (!file.open(QIODevice::WriteOnly))
+        return false;
+
+    file.write(reinterpret_cast<const char*>(data),
+               static_cast<qint64>(size));
+
+    file.close();
+
+    return true;
+}
+//------------------------------------------------ JPEG ------------------------------------------------

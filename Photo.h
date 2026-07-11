@@ -27,9 +27,9 @@ public:
     Photo(int id);
     ~Photo();
 
+    bool displayPhoto();
     bool sendRequest(QString &requestType);
 
-    bool savePhoto(QString &format, const QString &resolution);
     // get
     int getId() const;
     int getCameraId() const;
@@ -70,5 +70,33 @@ private:
 
 
 };
+#include <vector>
+#include <cstdint>
+#include <cstring>
+#include <QFile>
+#include <QDir>
 
+class RawImage
+{
+public:
+    RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel = 1);
+    // Возвращает false, если пакет не помещается.
+    bool addPacket(const uint8_t* data, size_t size);
+
+    bool isComplete() const;
+
+    bool SaveRawImage(const QString& path,
+                      const QString& fileName,
+                      const uint8_t* data,
+                      size_t size);
+//private:
+    uint16_t width{};
+    uint16_t height{};
+    uint8_t  bytesPerPixel{1};
+
+    size_t expectedSize{};
+    size_t received{};
+
+    std::vector<uint8_t> buffer;
+};
 #endif // PHOTO_H

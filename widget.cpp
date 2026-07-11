@@ -307,6 +307,13 @@ Widget::Widget(QWidget *parent)
     set_default_settings_button->setMinimumHeight(30);
     settings_scroll->setFrameShape(QFrame::NoFrame);
     }
+    //Подключение кнопок
+    connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
+    connect(save_settings_button, &QPushButton::clicked, this,  &Widget::ChangeSettings);
+    connect(set_default_settings_button, &QPushButton::clicked, this,  &Widget::SetDefaultSettings);
+    connect(photo_format_combo,&QComboBox::currentTextChanged,this,&Widget::UpdateResolutionCombo);
+    connect(photo_request,&QPushButton::clicked,this,&Widget::photoRequest);
+    connect(load_info,&QPushButton::clicked,this,&Widget::loadFromFile);
 }
 void Widget::resizeEvent(QResizeEvent *event)
 {
@@ -329,11 +336,6 @@ void Widget::resizeEvent(QResizeEvent *event)
         5
         );
 
-    //Подключение кнопок
-    connect(switch_windows, &QPushButton::clicked, this,  &Widget::ChangePage);
-    connect(save_settings_button, &QPushButton::clicked, this,  &Widget::ChangeSettings);
-    connect(set_default_settings_button, &QPushButton::clicked, this,  &Widget::SetDefaultSettings);
-    connect(photo_format_combo,&QComboBox::currentTextChanged,this,&Widget::UpdateResolutionCombo);
 }
 void Widget::ChangePage(){
     int index=abs(stacked_widget->currentIndex()-1);
@@ -419,5 +421,90 @@ void Widget::UpdateResolutionCombo()
         resolution_combo->addItems(rawResolutions);
     }
     resolution_combo->setCurrentIndex(0);
+}
+void Widget::photoRequest(){
+    RawImage image=RawImage(80,60);
+    showRawImage(image);
+    image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
+                 "photo.raw",
+                 image.buffer.data(),
+                 image.expectedSize);
+}
+void Widget::showRawImage(const RawImage& image)
+{
+    QImage img(image.buffer.data(),
+               image.width,
+               image.height,
+               image.width,              // bytesPerLine
+               QImage::Format_Grayscale8);
+
+    QLabel *label = photo_frame->findChild<QLabel *>();
+
+    if (!label)
+    {
+        label = new QLabel(photo_frame);
+        label->setAlignment(Qt::AlignCenter);
+        label->setGeometry(photo_frame->rect());
+    }
+
+    label->setPixmap(QPixmap::fromImage(img).scaled(
+        photo_frame->size(),
+        Qt::KeepAspectRatio,
+        Qt::SmoothTransformation));
+}
+
+bool Widget::showRawImage2(const uint8_t *data,
+                          int width,
+                          int height)
+{
+    if (data == nullptr)
+        return false;
+
+    imageBuffer = QByteArray(reinterpret_cast<const char *>(data),
+                             width * height);
+
+    QImage image(reinterpret_cast<const uchar *>(imageBuffer.constData()),
+                 width,
+                 height,
+                 width,
+                 QImage::Format_Grayscale8);
+
+    if (photo_label == nullptr)
+    {
+        photo_label = new QLabel(photo_frame);
+        photo_label->setAlignment(Qt::AlignCenter);
+    }
+
+    photo_label->setGeometry(photo_frame->rect());
+
+    photo_label->setPixmap(QPixmap::fromImage(image).scaled(
+        photo_frame->size(),
+        Qt::KeepAspectRatio,
+        Qt::SmoothTransformation));
+
+    return true;
+}
+bool Widget::showRawFileImage(const QString &fileName,
+                              int width,
+                              int height)
+{
+    QFile file(fileName);
+
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+
+    QByteArray raw = file.readAll();
+    file.close();
+
+    if (raw.size() != width * height)
+        return false;
+
+    return showRawImage2(
+        reinterpret_cast<const uint8_t *>(raw.constData()),
+        width,
+        height);
+}
+void Widget::loadFromFile(){
+    bool ok = showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
 }
 Widget::~Widget() = default;

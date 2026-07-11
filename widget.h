@@ -16,6 +16,8 @@
 #include <QSettings>
 #include <QMessageBox>
 
+#include "Photo.h"
+
 const double control_max_percent = 20;
 
 const int window_start_width = 1200;
@@ -46,6 +48,16 @@ public:
     explicit Widget(QWidget *parent =nullptr);
     ~Widget() override;
 
+    QLabel
+        *number_value,
+        *time_value,
+        *photo_id_value,
+        *cap_is_set_value,
+        *info_changed;
+
+    QFrame *photo_frame;
+    QLabel *photo_label;
+
 private:
     QStackedWidget *stacked_widget;
 
@@ -68,15 +80,7 @@ private:
         *number_label,
         *time_label,
         *photo_id_label,
-        *cap_is_set_label,
-        *number_value,
-        *time_value,
-        *photo_id_value,
-        *cap_is_set_value,
-        *info_changed;
-
-    QFrame *photo_frame;
-    QLabel *photo_label;
+        *cap_is_set_label;
 
     QWidget
         *photo_section,
@@ -147,6 +151,9 @@ private:
     QPushButton
         *save_settings_button,
         *set_default_settings_button;
+
+
+    QByteArray imageBuffer;
 private slots:
     void ChangePage();
     void ChangeSettings();
@@ -154,8 +161,17 @@ private slots:
     void LoadComboFromSettings(QSettings &settings, const QString &key, QComboBox *combo);
     void SetDefaultSettings();
     void UpdateResolutionCombo();
+    void showRawImage(const RawImage& image);
+    bool showRawImage2(const uint8_t *data,
+                          int width,
+                       int height);
+    bool showRawFileImage(const QString &fileName,
+                          int width,
+                          int height);
+    void loadFromFile();
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void photoRequest();
 };
 
 #endif // WIDGET_H
