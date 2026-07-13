@@ -30,9 +30,11 @@ Widget::Widget(QWidget *parent)
     info_grid = new QGridLayout();
     //элементы
     photo_frame = new QFrame(photo_section);
+    photo_frame->setObjectName("photoFrame");
     photo_label = new QLabel(photo_frame);
-    photo_label->setGeometry(photo_frame->rect());
+    //photo_label->setGeometry(photo_frame->rect());
     photo_label->setAlignment(Qt::AlignCenter);
+    photo_label->setStyleSheet("border: none;");
 
     auto_title = new QLabel("Автоматический запрос");
     start_auto_request = new QPushButton(buttons_section);
@@ -92,8 +94,10 @@ Widget::Widget(QWidget *parent)
     buttons_layout->addWidget(photo_request);
     buttons_layout->addWidget(load_info);
     //параметры рамки
-    photo_frame->setFrameShape(QFrame::Box);
-    photo_frame->setLineWidth(3);
+    photo_frame->setFrameShape(QFrame::NoFrame);
+    photo_frame->setStyleSheet(
+        QString("#photoFrame { border:%1px solid black; }")
+            .arg(LineWidth));
     //параметры фото
     photo_label->setAlignment(Qt::AlignCenter);
     //параметры кнопок
@@ -328,7 +332,12 @@ void Widget::resizeEvent(QResizeEvent *event)
                 Qt::SmoothTransformation
                 )
             );
-        photo_label->setGeometry(photo_frame->rect());
+        photo_label->setGeometry(photo_frame->rect().adjusted(
+            LineWidth,
+            LineWidth,
+            -LineWidth,
+            -LineWidth));
+        //photo_label->setGeometry(photo_frame->rect());
     }
     // смена страниц в правый верхний угол
     switch_windows->move(
@@ -424,11 +433,22 @@ void Widget::UpdateResolutionCombo()
 }
 void Widget::photoRequest(){
     RawImage image=RawImage(80,60);
-    showRawImage(image);
+    image.GenerateRawImage(image);
+    //showRawImage(image);
+    showRawImage2(image.buffer.data(),80,60);
+    setPhotoFrameColor(Qt::red);
     image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
                  "photo.raw",
                  image.buffer.data(),
                  image.expectedSize);
+}
+
+void Widget::setPhotoFrameColor(const QColor &color)
+{
+    photo_frame->setStyleSheet(
+        QString("#photoFrame { border: %1px solid %2; }")
+            .arg(LineWidth)
+            .arg(color.name()));
 }
 void Widget::showRawImage(const RawImage& image)
 {
@@ -475,13 +495,20 @@ bool Widget::showRawImage2(const uint8_t *data,
         photo_label->setAlignment(Qt::AlignCenter);
     }
 
-    photo_label->setGeometry(photo_frame->rect());
+    photo_label->setGeometry(photo_frame->rect().adjusted(
+        LineWidth,
+        LineWidth,
+        -LineWidth,
+        -LineWidth));
+    //photo_label->setGeometry(photo_frame->rect());
 
-    photo_label->setPixmap(QPixmap::fromImage(image).scaled(
-        photo_frame->size(),
-        Qt::KeepAspectRatio,
-        Qt::SmoothTransformation));
+    original_photo = QPixmap::fromImage(image);
 
+    photo_label->setPixmap(
+        original_photo.scaled(
+            photo_frame->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation));
     return true;
 }
 bool Widget::showRawFileImage(const QString &fileName,
@@ -505,6 +532,6 @@ bool Widget::showRawFileImage(const QString &fileName,
         height);
 }
 void Widget::loadFromFile(){
-    bool ok = showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
+    showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
 }
 Widget::~Widget() = default;

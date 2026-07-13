@@ -78,7 +78,6 @@ bool Photo::sendRequest(const QString &requestType)
 
 bool Photo::receiveResponse()
 {
-
     return true;
 }
 
@@ -116,7 +115,35 @@ RawImage::RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel)
 
     received = 0;
 }
+void RawImage::GenerateRawImage(RawImage& image)
+{
+    constexpr int WIDTH = 80;
+    constexpr int HEIGHT = 60;
 
+    uint8_t packet[8];
+    size_t index = 0;
+
+    for (int y = 0; y < HEIGHT; ++y)
+    {
+        for (int x = 0; x < WIDTH; ++x)
+        {
+            packet[index++] = static_cast<uint8_t>(x * 255 / (WIDTH - 1));
+
+            if (index == sizeof(packet))
+            {
+                if (!image.addPacket(packet, sizeof(packet)))
+                    return;
+
+                index = 0;
+            }
+        }
+    }
+
+    if (index != 0)
+    {
+        image.addPacket(packet, index);
+    }
+}
 // Возвращает false, если пакет не помещается.
 bool RawImage::addPacket(const uint8_t* data, size_t size)
 {

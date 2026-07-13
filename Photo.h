@@ -89,6 +89,7 @@ public:
                       const QString& fileName,
                       const uint8_t* data,
                       size_t size);
+    void GenerateRawImage(RawImage& image);
 //private:
     uint16_t width{};
     uint16_t height{};

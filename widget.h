@@ -24,6 +24,7 @@ const int window_start_width = 1200;
 const int window_start_height = 700;
 
 const int control_min_width = 300;
+const int LineWidth=3;
 
 const int switch_button_margin = 5;
 const QStringList rawResolutions = {
@@ -172,6 +173,7 @@ private slots:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void photoRequest();
+    void setPhotoFrameColor(const QColor &color);
 };
 
 #endif // WIDGET_H
