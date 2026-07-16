@@ -15,6 +15,8 @@
 #include <QScrollBar>
 #include <QSettings>
 #include <QMessageBox>
+#include <QTimer>
+
 
 #include "Photo.h"
 
@@ -25,8 +27,10 @@ const int window_start_height = 700;
 
 const int control_min_width = 300;
 const int LineWidth=3;
-
 const int switch_button_margin = 5;
+
+extern bool requestInProgress;
+
 const QStringList rawResolutions = {
     "80x60",
     "160x120",
@@ -65,6 +69,8 @@ private:
     QWidget *page1, *page2;
 
     QPushButton *switch_windows;
+
+    QTimer *autoRequestTimer;
 
     //1 стр
     QPushButton
@@ -170,6 +176,8 @@ private slots:
                           int width,
                           int height);
     void loadFromFile();
+    void startAutoRequest();
+    void stopAutoRequest();
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void photoRequest();

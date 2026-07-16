@@ -115,7 +115,7 @@ RawImage::RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel)
 
     received = 0;
 }
-void RawImage::GenerateRawImage(RawImage& image)
+void RawImage::GenerateRawImage()
 {
     constexpr int WIDTH = 80;
     constexpr int HEIGHT = 60;
@@ -131,7 +131,7 @@ void RawImage::GenerateRawImage(RawImage& image)
 
             if (index == sizeof(packet))
             {
-                if (!image.addPacket(packet, sizeof(packet)))
+                if (!this->addPacket(packet, sizeof(packet)))
                     return;
 
                 index = 0;
@@ -141,7 +141,42 @@ void RawImage::GenerateRawImage(RawImage& image)
 
     if (index != 0)
     {
-        image.addPacket(packet, index);
+        this->addPacket(packet, index);
+    }
+}
+void RawImage::GenerateRawImage2()
+{
+    constexpr int WIDTH = 80;
+    constexpr int HEIGHT = 60;
+
+    uint8_t packet[8];
+    size_t index = 0;
+
+    // Новый seed при каждом вызове
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 255);
+
+    for (int y = 0; y < HEIGHT; ++y)
+    {
+        for (int x = 0; x < WIDTH; ++x)
+        {
+            // Каждый пиксель будет случайным
+            packet[index++] = static_cast<uint8_t>(dist(gen));
+
+            if (index == sizeof(packet))
+            {
+                if (!this->addPacket(packet, sizeof(packet)))
+                    return;
+
+                index = 0;
+            }
+        }
+    }
+
+    if (index != 0)
+    {
+        this->addPacket(packet, index);
     }
 }
 // Возвращает false, если пакет не помещается.

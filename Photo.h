@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <chrono>
+
+#include <random>
 // Форматы сохраняемого изображения
 enum class ImageFormat
 {
@@ -89,7 +91,8 @@ public:
                       const QString& fileName,
                       const uint8_t* data,
                       size_t size);
-    void GenerateRawImage(RawImage& image);
+    void GenerateRawImage();
+    void GenerateRawImage2();
 //private:
     uint16_t width{};
     uint16_t height{};

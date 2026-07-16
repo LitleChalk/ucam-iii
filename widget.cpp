@@ -1,9 +1,15 @@
 #include "widget.h"
+bool requestInProgress = false;
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
 
 {
+
+    autoRequestTimer = new QTimer(this);
+
+    connect(autoRequestTimer, &QTimer::timeout,
+            this, &Widget::photoRequest);
     stacked_widget = new QStackedWidget(this);
 
     page1 = new QWidget(this);
@@ -82,6 +88,7 @@ Widget::Widget(QWidget *parent)
     info_grid->addWidget(cap_is_set_value,    4, 1, 1, 2);
     info_grid->addWidget(info_changed,    5, 0,1,3);
     info_layout->addLayout(info_grid);
+    info_changed->setVisible(false);
 
     control_layout->addWidget(buttons_section);
     control_layout->addWidget(info_section);
@@ -103,6 +110,7 @@ Widget::Widget(QWidget *parent)
     //параметры кнопок
     start_auto_request->setText("Старт");
     stop_auto_request->setText("Стоп");
+    stop_auto_request->setEnabled(false);
     photo_request->setText("Запросить фото");
     load_info->setText("Загрузить информацию");
     change_info->setText("Редактировать");
@@ -292,9 +300,9 @@ Widget::Widget(QWidget *parent)
     resolution_combo->addItem("160x120");
 
     photo_format_combo->addItem("raw, 8-bit for Y only");
-    photo_format_combo->addItem("raw, CrYCbY");
-    photo_format_combo->addItem("raw, 565(RGB)");
-    photo_format_combo->addItem("jpeg");
+    //photo_format_combo->addItem("raw, CrYCbY");
+    //photo_format_combo->addItem("raw, 565(RGB)");
+    //photo_format_combo->addItem("jpeg");
 
     //параметры размеров
     settings_scroll->setSizePolicy(
@@ -318,6 +326,8 @@ Widget::Widget(QWidget *parent)
     connect(photo_format_combo,&QComboBox::currentTextChanged,this,&Widget::UpdateResolutionCombo);
     connect(photo_request,&QPushButton::clicked,this,&Widget::photoRequest);
     connect(load_info,&QPushButton::clicked,this,&Widget::loadFromFile);
+    connect(start_auto_request, &QPushButton::clicked,this, &Widget::startAutoRequest);
+    connect(stop_auto_request, &QPushButton::clicked,this, &Widget::stopAutoRequest);
 }
 void Widget::resizeEvent(QResizeEvent *event)
 {
@@ -432,8 +442,11 @@ void Widget::UpdateResolutionCombo()
     resolution_combo->setCurrentIndex(0);
 }
 void Widget::photoRequest(){
+    if (requestInProgress)
+        return;
+    requestInProgress = true;
     RawImage image=RawImage(80,60);
-    image.GenerateRawImage(image);
+    image.GenerateRawImage2();
     //showRawImage(image);
     showRawImage2(image.buffer.data(),80,60);
     setPhotoFrameColor(Qt::red);
@@ -441,6 +454,7 @@ void Widget::photoRequest(){
                  "photo.raw",
                  image.buffer.data(),
                  image.expectedSize);
+    requestInProgress=false;
 }
 
 void Widget::setPhotoFrameColor(const QColor &color)
@@ -533,5 +547,33 @@ bool Widget::showRawFileImage(const QString &fileName,
 }
 void Widget::loadFromFile(){
     showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
+}
+void Widget::startAutoRequest()
+{
+    if (!QFile::exists("settings.ini")) {
+        QMessageBox::warning(this, "Ошибка", "Настройки не сохранены. Файл настроек settings.ini отсутствует.");
+        return;
+    }
+
+    QSettings settings("settings.ini", QSettings::IniFormat);
+
+    if (!settings.contains("polling_frequency")) {
+        QMessageBox::warning(this, "Ошибка", "В файле отсутствует параметр частоты опроса.");
+        return;
+    }
+
+    int frequency = settings.value("polling_frequency").toInt(); // секунд
+
+    autoRequestTimer->start(frequency * 1000);
+
+    start_auto_request->setEnabled(false);
+    stop_auto_request->setEnabled(true);
+}
+void Widget::stopAutoRequest()
+{
+    autoRequestTimer->stop();
+
+    start_auto_request->setEnabled(true);
+    stop_auto_request->setEnabled(false);
 }
 Widget::~Widget() = default;
