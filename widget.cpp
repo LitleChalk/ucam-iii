@@ -451,6 +451,8 @@ void Widget::UpdateResolutionCombo()
     resolution_combo->setCurrentIndex(0);
 }
 void Widget::photoRequest(){
+    setPhotoFrameColor(Qt::black);
+    cap_is_set_value->setText("-");
     if (requestInProgress)
         return;
     requestInProgress = true;
@@ -468,7 +470,6 @@ void Widget::photoRequest(){
     image.GenerateRawImage2();
     //showRawImage(image);
     showRawImage2(image.buffer.data(),80,60);
-    setPhotoFrameColor(Qt::red);
     if (photo_format_combo->currentText() == "jpeg"){}
     else{
         if(data_format_combo->currentText() == "Инфо+фото"){
@@ -607,9 +608,19 @@ void Widget::loadFromFile(){
                               .arg(dialog.cameraIdEdit->text().toInt())
                               .arg(dialog.batchEdit->text());
 
-
         if(!photo.loadFromCsv(dirPath,dialog.idEdit->text().toInt()))
             return;
+        auto t = std::chrono::system_clock::to_time_t(photo.time);
+        time_value->setText(QDateTime::fromSecsSinceEpoch(t).toString("dd.MM.yyyy hh:mm:ss.ms"));
+        photo_id_value->setText(QString::number(photo.getId()));
+        if(photo.getCap()){
+            cap_is_set_value->setText("Присутствует");
+            setPhotoFrameColor(Qt::green);
+        }
+        else{
+            cap_is_set_value->setText("Отсутствует");
+            setPhotoFrameColor(Qt::red);
+        }
 
 
         showRawFileImage(dirPath,photo.getId(),80,60);
