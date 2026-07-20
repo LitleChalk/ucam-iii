@@ -1,6 +1,5 @@
 #ifndef WIDGET_H
 #define WIDGET_H
-
 #include <QWidget>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -16,6 +15,12 @@
 #include <QScrollBar>
 #include <QSettings>
 #include <QMessageBox>
+#include <QTimer>
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QDialogButtonBox>
+#include "Photo.h"
 
 const double control_max_percent = 20;
 
@@ -23,8 +28,11 @@ const int window_start_width = 1200;
 const int window_start_height = 700;
 
 const int control_min_width = 300;
-
+const int LineWidth = 3;
 const int switch_button_margin = 5;
+
+extern bool requestInProgress;
+
 const QStringList rawResolutions = {
     "80x60",
     "160x120",
@@ -46,13 +54,27 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent =nullptr);
     ~Widget() override;
+    int current_ID=0;
+    QLabel
+        *number_value,
+        *time_value,
+        *photo_id_value,
+        *cap_is_set_value,
+        *info_changed;
+
+    QFrame *photo_frame;
+    QLabel *photo_label;
 
 private:
+    Photo photo;
+
     QStackedWidget *stacked_widget;
 
     QWidget *page1, *page2;
 
     QPushButton *switch_windows;
+
+    QTimer *autoRequestTimer;
 
     //1 стр
     QPushButton
@@ -69,15 +91,7 @@ private:
         *number_label,
         *time_label,
         *photo_id_label,
-        *cap_is_set_label,
-        *number_value,
-        *time_value,
-        *photo_id_value,
-        *cap_is_set_value,
-        *info_changed;
-
-    QFrame *photo_frame;
-    QLabel *photo_label;
+        *cap_is_set_label;
 
     QWidget
         *photo_section,
@@ -148,6 +162,9 @@ private:
     QPushButton
         *save_settings_button,
         *set_default_settings_button;
+
+
+    QByteArray imageBuffer;
 private slots:
     void ChangePage();
     void ChangeSettings();
@@ -155,8 +172,37 @@ private slots:
     void LoadComboFromSettings(QSettings &settings, const QString &key, QComboBox *combo);
     void SetDefaultSettings();
     void UpdateResolutionCombo();
+    void showRawImage(const RawImage& image);
+    bool showRawImage2(const uint8_t *data,
+                          int width,
+                       int height);
+    bool showRawFileImage(const QString &fileName,
+                          int id,
+                          int width,
+                          int height);
+    void loadFromFile();
+    void startAutoRequest();
+    void stopAutoRequest();
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void photoRequest();
+    void setPhotoFrameColor(const QColor &color);
+};
+
+class PhotoDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit PhotoDialog(QWidget *parent = nullptr);
+
+    int getId() const;
+    int getCameraId() const;
+    QString getBatch() const;
+
+    QLineEdit *idEdit;
+    QLineEdit *cameraIdEdit;
+    QLineEdit *batchEdit;
 };
 
 #endif // WIDGET_H
