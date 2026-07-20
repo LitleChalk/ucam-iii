@@ -16,8 +16,10 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QTimer>
-
-
+#include <QInputDialog>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QDialogButtonBox>
 #include "Photo.h"
 
 const double control_max_percent = 20;
@@ -64,6 +66,8 @@ public:
     QLabel *photo_label;
 
 private:
+    Photo photo;
+
     QStackedWidget *stacked_widget;
 
     QWidget *page1, *page2;
@@ -182,6 +186,22 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
     void photoRequest();
     void setPhotoFrameColor(const QColor &color);
+};
+
+class PhotoDialog : public QDialog
+{
+    Q_OBJECT
+
+public:
+    explicit PhotoDialog(QWidget *parent = nullptr);
+
+    int getId() const;
+    int getCameraId() const;
+    QString getBatch() const;
+
+    QLineEdit *idEdit;
+    QLineEdit *cameraIdEdit;
+    QLineEdit *batchEdit;
 };
 
 #endif // WIDGET_H

@@ -296,11 +296,11 @@ Widget::Widget(QWidget *parent)
         data_format_combo->addItem("Фото");
         data_format_combo->addItem("Инфо+фото");
 
-        resolution_combo->addItem("160x120");
+        //resolution_combo->addItem("160x120");
 
-        photo_format_combo->addItem("raw, 8-bit for Y only");
-        //photo_format_combo->addItem("raw, CrYCbY");
-        //photo_format_combo->addItem("raw, 565(RGB)");
+        photo_format_combo->addItem("raw 8-bit for Y only");
+        //photo_format_combo->addItem("raw CrYCbY");
+        //photo_format_combo->addItem("raw 565(RGB)");
         //photo_format_combo->addItem("jpeg");
 
         //параметры размеров
@@ -457,9 +457,12 @@ void Widget::photoRequest(){
                                "photo.raw",
                                image.buffer.data(),
                                image.expectedSize);
+            image.saveToCsv(photo_format_combo->currentText(),
+                            resolution_combo->currentText());
         }
         else if(data_format_combo->currentText() == "Инфо"){
-
+            image.saveToCsv(photo_format_combo->currentText(),
+                            resolution_combo->currentText());
         }
         else{
             image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
@@ -560,6 +563,17 @@ bool Widget::showRawFileImage(const QString &fileName,
         height);
 }
 void Widget::loadFromFile(){
+    PhotoDialog dialog(this);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        photo = Photo(
+            dialog.idEdit->text().toInt(),
+            dialog.cameraIdEdit->text().toInt(),
+            dialog.batchEdit->text()
+            );
+    }
+
     showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
 }
 void Widget::startAutoRequest()
@@ -591,3 +605,42 @@ void Widget::stopAutoRequest()
     stop_auto_request->setEnabled(false);
 }
 Widget::~Widget() = default;
+
+
+PhotoDialog::PhotoDialog(QWidget *parent)
+    : QDialog(parent)
+{
+    setWindowTitle("Параметры фото");
+
+    idEdit= new QLineEdit(this);
+    cameraIdEdit= new QLineEdit(this);
+    batchEdit = new QLineEdit(this);
+
+
+    QFormLayout *layout = new QFormLayout(this);
+
+    layout->addRow("ID:", idEdit);
+    layout->addRow("Camera ID:", cameraIdEdit);
+    layout->addRow("Batch:", batchEdit);
+
+
+    QDialogButtonBox *buttons =
+        new QDialogButtonBox(
+            QDialogButtonBox::Ok |
+                QDialogButtonBox::Cancel,
+            this);
+
+
+    connect(buttons,
+            &QDialogButtonBox::accepted,
+            this,
+            &QDialog::accept);
+
+    connect(buttons,
+            &QDialogButtonBox::rejected,
+            this,
+            &QDialog::reject);
+
+
+    layout->addWidget(buttons);
+}

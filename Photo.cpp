@@ -3,17 +3,24 @@
 #include <QFile>
 #include <QTextStream>
 
-Photo::Photo(int id)
-    : id(id),
-    camera_id(-1),
+Photo::Photo()
+    : id(0),
+    camera_id(0),
     time(std::chrono::system_clock::now()),
-    batch(""),
     cap(false),
     changed(false)
 {
-
 }
 
+Photo::Photo(int id, int cameraId, const QString &batch)
+    : id(id),
+    camera_id(cameraId),
+    time(std::chrono::system_clock::now()),
+    batch(batch),
+    cap(false),
+    changed(false)
+{
+}
 Photo::~Photo()
 {
 
@@ -88,21 +95,94 @@ bool Photo::savePhoto(const QString &format,
     return true;
 }
 
-bool Photo::saveToCsv()
+bool Photo::saveToCsv(const QString &format,
+                      const QString &resolution)
 {
-    const QString &fileName="";
-    QFile file(fileName);
+    QString dirPath = QString("saved_info/camera_%1/batch_%2")
+    .arg(camera_id)
+        .arg(batch);
+
+    QDir dir;
+    if (!dir.mkpath(dirPath))
+        return false;
+
+    QFile file(dirPath + "/info.csv");
+    bool newFile = !file.exists();
 
     if (!file.open(QIODevice::Append | QIODevice::Text))
         return false;
 
     QTextStream out(&file);
 
-    file.close();
+    if (newFile)
+        out << "id,time,cap,changed,format,resolution\n";
+
+    //auto tt = std::chrono::system_clock::to_time_t(time);
+    //QString timeStr = QDateTime::fromSecsSinceEpoch(tt).toString(Qt::ISODate);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                  time.time_since_epoch()).count();
+
+    QString timeStr =
+        QDateTime::fromMSecsSinceEpoch(ms).toString(Qt::ISODateWithMs);
+    out << id << ','
+        << timeStr << ','
+        << (cap ? 1 : 0) << ','
+        << (changed ? 1 : 0) << ','
+        << format << ','
+        << resolution << '\n';
 
     return true;
 }
+bool Photo::loadFromCsv(const QString &filePath,
+                        int cameraId,
+                        const QString &batch)
+{
+    QFile file(filePath);
 
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+
+    QString header = in.readLine(); // пропускаем заголовок
+
+    if (in.atEnd())
+        return false;
+
+
+    QString line;
+
+    while (!in.atEnd())
+        line = in.readLine(); // берем последнюю запись
+
+
+    QStringList data = line.split(',');
+
+    if (data.size() < 6)
+        return false;
+
+
+    id = data[0].toInt();
+
+    QDateTime dt =
+        QDateTime::fromString(data[1], Qt::ISODateWithMs);
+
+    time = std::chrono::system_clock::time_point(
+        std::chrono::milliseconds(
+            dt.toMSecsSinceEpoch()
+            )
+        );
+
+
+    cap = data[2].toInt();
+    changed = data[3].toInt();
+
+    camera_id = cameraId;
+    this->batch = batch;
+
+
+    return true;
+}
 //------------------------------------------------ RAW ------------------------------------------------
 
 RawImage::RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel)

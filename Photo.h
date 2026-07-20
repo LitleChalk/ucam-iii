@@ -26,7 +26,8 @@ enum class RequestType
 class Photo
 {
 public:
-    Photo(int id);
+    Photo();
+    Photo(int id, int cameraId, const QString &batch);
     ~Photo();
 
     bool displayPhoto();
@@ -56,8 +57,12 @@ public:
                    const QString &resolution);
 
     // сохранение информации о фото
-    bool saveToCsv();
+    bool saveToCsv(const QString &format,
+                   const QString &resolution);
 
+    bool loadFromCsv(const QString &filePath,
+                     int cameraId,
+                     const QString &batch);
 private:
 
     int id;
@@ -78,7 +83,7 @@ private:
 #include <QFile>
 #include <QDir>
 
-class RawImage
+class RawImage  : public Photo
 {
 public:
     RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel = 1);
