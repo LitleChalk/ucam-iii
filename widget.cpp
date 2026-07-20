@@ -47,11 +47,12 @@ Widget::Widget(QWidget *parent)
         photo_request = new QPushButton(buttons_section);
         load_info = new QPushButton(buttons_section);
 
-        change_info = new QPushButton(info_section);
-        save_info = new QPushButton(info_section);
+        //change_info = new QPushButton(info_section);
+        //save_info = new QPushButton(info_section);
 
-        info_title = new QLabel("Инфо:");
-        number_label = new QLabel("№ камеры");
+        info_title = new QLabel("Инфо");
+        info_title->setAlignment(Qt::AlignCenter);
+        //number_label = new QLabel("№ камеры");
         time_label = new QLabel("Время");
         photo_id_label = new QLabel("ID снимка");
         cap_is_set_label = new QLabel("Наличие крышки");
@@ -75,10 +76,10 @@ Widget::Widget(QWidget *parent)
         photo_layout->setSpacing(0);
 
         info_grid->addWidget(info_title,    0, 0);
-        info_grid->addWidget(change_info,   0, 1);
-        info_grid->addWidget(save_info,     0, 2);
-        info_grid->addWidget(number_label,  1, 0);
-        info_grid->addWidget(number_value,  1, 1, 1, 2);
+        //info_grid->addWidget(change_info,   0, 1);
+        //info_grid->addWidget(save_info,     0, 2);
+        //info_grid->addWidget(number_label,  1, 0);
+        //info_grid->addWidget(number_value,  1, 1, 1, 2);
         info_grid->addWidget(time_label,    2, 0);
         info_grid->addWidget(time_value,    2, 1, 1, 2);
         info_grid->addWidget(photo_id_label,  3, 0);
@@ -112,8 +113,8 @@ Widget::Widget(QWidget *parent)
         stop_auto_request->setEnabled(false);
         photo_request->setText("Запросить фото");
         load_info->setText("Загрузить информацию");
-        change_info->setText("Редактировать");
-        save_info->setText("Сохранить");
+        //change_info->setText("Редактировать");
+        //save_info->setText("Сохранить");
         switch_windows->setText("Страница");
         //параметры размеров
         resize(window_start_width, window_start_height);
@@ -296,7 +297,7 @@ Widget::Widget(QWidget *parent)
         data_format_combo->addItem("Фото");
         data_format_combo->addItem("Инфо+фото");
 
-        //resolution_combo->addItem("160x120");
+        resolution_combo->addItem("80x60");
 
         photo_format_combo->addItem("raw 8-bit for Y only");
         //photo_format_combo->addItem("raw CrYCbY");
@@ -328,7 +329,15 @@ Widget::Widget(QWidget *parent)
     connect(start_auto_request, &QPushButton::clicked,this, &Widget::startAutoRequest);
     connect(stop_auto_request, &QPushButton::clicked,this, &Widget::stopAutoRequest);
 
+    QSettings settings("default_settings.ini", QSettings::IniFormat);
+    current_ID=settings.value("id").toInt();
+    settings.sync();
     DisplayCurrentSettings();
+    reset_id_combo->setEnabled(false);
+    tracked_objects_combo->setEnabled(false);
+    data_format_combo->setEnabled(false);
+    resolution_combo->setEnabled(false);
+    photo_format_combo->setEnabled(false);
 }
 void Widget::resizeEvent(QResizeEvent *event)
 {
@@ -446,6 +455,16 @@ void Widget::photoRequest(){
         return;
     requestInProgress = true;
     RawImage image=RawImage(80,60);
+    photo_id_value->setText(QString::number(++current_ID));
+    image.setId(current_ID);
+    QSettings settings("default_settings.ini", QSettings::IniFormat);
+    settings.setValue("id",current_ID);
+    settings.sync();
+    auto t = std::chrono::system_clock::to_time_t(image.time);
+    time_value->setText(QDateTime::fromSecsSinceEpoch(t).toString("dd.MM.yyyy hh:mm:ss"));
+    image.setBatch(batch_number_input->text());
+    image.setCameraId(camera_number_input->text().toInt());
+
     image.GenerateRawImage2();
     //showRawImage(image);
     showRawImage2(image.buffer.data(),80,60);
@@ -453,8 +472,13 @@ void Widget::photoRequest(){
     if (photo_format_combo->currentText() == "jpeg"){}
     else{
         if(data_format_combo->currentText() == "Инфо+фото"){
-            image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
+            /*image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
                                "photo.raw",
+                               image.buffer.data(),
+                               image.expectedSize);*/
+            image.SaveRawImage(camera_number_input->text().toInt(),
+                               batch_number_input->text(),
+                               current_ID,
                                image.buffer.data(),
                                image.expectedSize);
             image.saveToCsv(photo_format_combo->currentText(),
@@ -465,10 +489,13 @@ void Widget::photoRequest(){
                             resolution_combo->currentText());
         }
         else{
-            image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
-                               "photo.raw",
+            image.SaveRawImage(camera_number_input->text().toInt(),
+                               batch_number_input->text(),
+                               current_ID,
                                image.buffer.data(),
-                               image.expectedSize);}
+                               image.expectedSize);
+        }
+
 
     }
     requestInProgress=false;

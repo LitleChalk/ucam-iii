@@ -54,7 +54,7 @@ class Widget : public QWidget
 public:
     explicit Widget(QWidget *parent =nullptr);
     ~Widget() override;
-
+    int current_ID=0;
     QLabel
         *number_value,
         *time_value,

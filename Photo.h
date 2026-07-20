@@ -3,6 +3,11 @@
 
 #include <QString>
 #include <chrono>
+#include <vector>
+#include <cstdint>
+#include <cstring>
+#include <QFile>
+#include <QDir>
 
 #include <random>
 // Форматы сохраняемого изображения
@@ -41,6 +46,7 @@ public:
     bool getCap() const;
     bool getChanged() const;
     //set
+    void setId(int Id);
     void setCameraId(int cameraId);
     void setBatch(const QString &batch);
     void setCap(bool cap);
@@ -63,12 +69,13 @@ public:
     bool loadFromCsv(const QString &filePath,
                      int cameraId,
                      const QString &batch);
+    bool savePhoto(const uint8_t* data, size_t size);
+    std::chrono::system_clock::time_point time;
 private:
 
     int id;
     int camera_id;
 
-    std::chrono::system_clock::time_point time;
 
     QString batch;
 
@@ -77,11 +84,6 @@ private:
 
 
 };
-#include <vector>
-#include <cstdint>
-#include <cstring>
-#include <QFile>
-#include <QDir>
 
 class RawImage  : public Photo
 {
@@ -94,6 +96,11 @@ public:
 
     bool SaveRawImage(const QString& path,
                       const QString& fileName,
+                      const uint8_t* data,
+                      size_t size);
+    bool SaveRawImage(int cameraId,
+                      const QString& batch,
+                      int id,
                       const uint8_t* data,
                       size_t size);
     void GenerateRawImage();

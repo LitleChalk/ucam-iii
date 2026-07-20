@@ -56,6 +56,10 @@ bool Photo::getChanged() const
     return changed;
 }
 //set
+void Photo::setId(int Id)
+{
+    id = Id;
+}
 void Photo::setCameraId(int cameraId)
 {
     camera_id = cameraId;
@@ -192,6 +196,7 @@ RawImage::RawImage(uint16_t Width, uint16_t Height, uint8_t BytesPerPixel)
     bytesPerPixel = BytesPerPixel;
     expectedSize = static_cast<size_t>(width) * height * bytesPerPixel;
     buffer.resize(expectedSize);
+    time=std::chrono::system_clock::now();
 
     received = 0;
 }
@@ -297,5 +302,29 @@ bool RawImage::SaveRawImage(const QString& path,
     file.close();
 
     return true;
+}
+bool RawImage::SaveRawImage(int cameraId,
+                            const QString& batch,
+                            int id,
+                            const uint8_t* data,
+                            size_t size)
+{
+    QString dirPath =
+        QString("saved_info/camera_%1/batch_%2")
+            .arg(cameraId)
+            .arg(batch);
+
+
+    QString fileName =
+        QString("Photo_%1.raw")
+            .arg(id);
+
+
+    return SaveRawImage(
+        dirPath,
+        fileName,
+        data,
+        size
+        );
 }
 //------------------------------------------------ JPEG ------------------------------------------------
