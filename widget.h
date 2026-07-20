@@ -177,6 +177,7 @@ private slots:
                           int width,
                        int height);
     bool showRawFileImage(const QString &fileName,
+                          int id,
                           int width,
                           int height);
     void loadFromFile();

@@ -570,10 +570,14 @@ bool Widget::showRawImage2(const uint8_t *data,
     return true;
 }
 bool Widget::showRawFileImage(const QString &fileName,
-                              int width,
-                              int height)
+                              int id,
+                              int width=80,
+                              int height=60)
 {
-    QFile file(fileName);
+
+    QFile file(fileName + QString("/Photo_%1.raw").arg(id));
+
+    //QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly))
         return false;
@@ -599,9 +603,17 @@ void Widget::loadFromFile(){
             dialog.cameraIdEdit->text().toInt(),
             dialog.batchEdit->text()
             );
-    }
+        QString dirPath = QString("saved_info/camera_%1/batch_%2")
+                              .arg(dialog.cameraIdEdit->text().toInt())
+                              .arg(dialog.batchEdit->text());
 
-    showRawFileImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1/photo.raw",80,60);
+
+        if(!photo.loadFromCsv(dirPath,dialog.idEdit->text().toInt()))
+            return;
+
+
+        showRawFileImage(dirPath,photo.getId(),80,60);
+    }
 }
 void Widget::startAutoRequest()
 {

@@ -137,55 +137,49 @@ bool Photo::saveToCsv(const QString &format,
 
     return true;
 }
-bool Photo::loadFromCsv(const QString &filePath,
-                        int cameraId,
-                        const QString &batch)
+bool Photo::loadFromCsv(const QString &dirPath, int id)
 {
-    QFile file(filePath);
-
+    QFile file(dirPath + "/info.csv");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return false;
-
     QTextStream in(&file);
 
-    QString header = in.readLine(); // пропускаем заголовок
-
-    if (in.atEnd())
-        return false;
-
-
-    QString line;
+    // пропускаем заголовок
+    in.readLine();
 
     while (!in.atEnd())
-        line = in.readLine(); // берем последнюю запись
+    {
+        QString line = in.readLine();
 
+        QStringList data = line.split(',');
 
-    QStringList data = line.split(',');
+        // некорректная строка
+        if (data.size() < 6)
+            continue;
 
-    if (data.size() < 6)
-        return false;
+        // ищем нужный id
+        if (data[0].toInt() == id)
+        {
+            this->id = id;
 
+            QDateTime dt =
+                QDateTime::fromString(data[1], Qt::ISODateWithMs);
 
-    id = data[0].toInt();
+            if (!dt.isValid())
+                return false;
 
-    QDateTime dt =
-        QDateTime::fromString(data[1], Qt::ISODateWithMs);
+            time = std::chrono::system_clock::time_point(
+                std::chrono::milliseconds(dt.toMSecsSinceEpoch()));
 
-    time = std::chrono::system_clock::time_point(
-        std::chrono::milliseconds(
-            dt.toMSecsSinceEpoch()
-            )
-        );
+            cap = data[2].toInt();
+            changed = data[3].toInt();
 
+            return true;
+        }
+    }
 
-    cap = data[2].toInt();
-    changed = data[3].toInt();
-
-    camera_id = cameraId;
-    this->batch = batch;
-
-
-    return true;
+    // запись с таким id не найдена
+    return false;
 }
 //------------------------------------------------ RAW ------------------------------------------------
 

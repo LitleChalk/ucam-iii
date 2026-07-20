@@ -66,9 +66,8 @@ public:
     bool saveToCsv(const QString &format,
                    const QString &resolution);
 
-    bool loadFromCsv(const QString &filePath,
-                     int cameraId,
-                     const QString &batch);
+    bool loadFromCsv(const QString &dirPath,
+                     int id);
     bool savePhoto(const uint8_t* data, size_t size);
     std::chrono::system_clock::time_point time;
 private:
