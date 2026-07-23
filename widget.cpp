@@ -1,8 +1,9 @@
 #include "widget.h"
 bool requestInProgress = false;
 
-Widget::Widget(QWidget *parent)
-    : QWidget(parent)
+Widget::Widget(Connection *connection, QWidget *parent)
+    : QWidget(parent),
+    port(connection)
 
 {
     autoRequestTimer = new QTimer(this);
@@ -328,7 +329,7 @@ Widget::Widget(QWidget *parent)
     connect(load_info,&QPushButton::clicked,this,&Widget::loadFromFile);
     connect(start_auto_request, &QPushButton::clicked,this, &Widget::startAutoRequest);
     connect(stop_auto_request, &QPushButton::clicked,this, &Widget::stopAutoRequest);
-
+    connect(&port,&Connection::portDisconnected,this,&Widget::disconnectMessage);
     QSettings settings("default_settings.ini", QSettings::IniFormat);
     current_ID=settings.value("id").toInt();
     settings.sync();
@@ -451,6 +452,17 @@ void Widget::UpdateResolutionCombo()
     resolution_combo->setCurrentIndex(0);
 }
 void Widget::photoRequest(){
+    if (!port.portIsOpen)
+        port.findDevice();
+    if (!port.portIsOpen){
+        QMessageBox::critical(
+            this,
+            "Ошибка",
+            "Не удалось установить подключение."
+            );
+        return;
+    }
+
     setPhotoFrameColor(Qt::black);
     cap_is_set_value->setText("-");
     if (requestInProgress)
@@ -467,7 +479,7 @@ void Widget::photoRequest(){
     image.setBatch(batch_number_input->text());
     image.setCameraId(camera_number_input->text().toInt());
 
-    image.GenerateRawImage2();
+    //image.GenerateRawImage2();
     //image.sendRequest("photo");
 
     //showRawImage(image);
@@ -695,4 +707,12 @@ PhotoDialog::PhotoDialog(QWidget *parent)
 
 
     layout->addWidget(buttons);
+}
+void Widget::disconnectMessage(){
+    QMessageBox::critical(
+        this,
+        "Ошибка",
+        "Подключение прервано."
+        );
+    return;
 }

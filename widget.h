@@ -21,6 +21,7 @@
 #include <QFormLayout>
 #include <QDialogButtonBox>
 #include "Photo.h"
+#include "Connection.h"
 
 const double control_max_percent = 20;
 
@@ -52,7 +53,7 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
-    explicit Widget(QWidget *parent =nullptr);
+    explicit Widget(Connection *connection, QWidget *parent =nullptr);
     ~Widget() override;
     int current_ID=0;
     QLabel
@@ -66,6 +67,7 @@ public:
     QLabel *photo_label;
 
 private:
+    Connection port;
     Photo photo;
 
     QStackedWidget *stacked_widget;
@@ -183,6 +185,7 @@ private slots:
     void loadFromFile();
     void startAutoRequest();
     void stopAutoRequest();
+    void disconnectMessage();
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void photoRequest();

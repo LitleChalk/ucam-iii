@@ -5,7 +5,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    Widget w;
+    Connection port;
+    Widget w(&port);
     w.setWindowTitle("Крышечка?");
     w.show();
     return QApplication::exec();
