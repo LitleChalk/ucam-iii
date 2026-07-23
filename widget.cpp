@@ -330,6 +330,8 @@ Widget::Widget(Connection *connection, QWidget *parent)
     connect(start_auto_request, &QPushButton::clicked,this, &Widget::startAutoRequest);
     connect(stop_auto_request, &QPushButton::clicked,this, &Widget::stopAutoRequest);
     connect(&port,&Connection::portDisconnected,this,&Widget::disconnectMessage);
+    connect(&port,&Connection::errorMsg,this,&Widget::errorMessage);
+
     QSettings settings("default_settings.ini", QSettings::IniFormat);
     current_ID=settings.value("id").toInt();
     settings.sync();
@@ -483,14 +485,18 @@ void Widget::photoRequest(){
     //image.sendRequest("photo");
 
     //showRawImage(image);
+    uint8_t PhotoReq[] =
+        {
+            0xAA,
+            0x03,
+            0x00
+        };
+    port.sendBytes(PhotoReq, 3);
+    image.buffer=port.getData(port.readBytes());
     showRawImage2(image.buffer.data(),80,60);
     if (photo_format_combo->currentText() == "jpeg"){}
     else{
         if(data_format_combo->currentText() == "Инфо+фото"){
-            /*image.SaveRawImage("D:/projects/coding/ucam-iii/interface1_coding/interface1_coding/saved_info/1",
-                               "photo.raw",
-                               image.buffer.data(),
-                               image.expectedSize);*/
             image.SaveRawImage(camera_number_input->text().toInt(),
                                batch_number_input->text(),
                                current_ID,
@@ -715,4 +721,21 @@ void Widget::disconnectMessage(){
         "Подключение прервано."
         );
     return;
+}
+void Widget::errorMessage(uint8_t errorCode){
+    //qDebug() << errorCode;
+    QString errorText;
+    switch(errorCode){
+    case 0xE3:
+        errorText = QString("Ошибка (%1) ERR_CAM_NOT_SYNC").arg(errorCode, 2, 16, QLatin1Char('0')).toUpper();
+        break;
+    case 0x60:
+        errorText = QString("Ошибка (%1). Фото повреждено.").arg(errorCode, 2, 16, QLatin1Char('0'));
+        break;
+    default:
+        errorText = QString("Ошибка %1").arg(errorCode, 2, 16, QLatin1Char('0'));
+        break;
+    }
+    qDebug() << errorText;
+    //QMessageBox::critical(this, "Ошибка", errorText);
 }

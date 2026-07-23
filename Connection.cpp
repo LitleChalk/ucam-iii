@@ -33,9 +33,12 @@ bool Connection::findDevice()
         serial.setParity(QSerialPort::NoParity);
         serial.setStopBits(QSerialPort::OneStop);
         serial.setFlowControl(QSerialPort::NoFlowControl);
-
-        if (!serial.open(QIODevice::ReadWrite))
-            continue;
+        if (!serial.open(QIODevice::ReadWrite)){
+    qDebug() << "Open failed:"
+             << serial.error()
+             << serial.errorString();
+    continue;
+}
         serial.clear();
         uint8_t Handshake[] =
             {
@@ -48,8 +51,8 @@ bool Connection::findDevice()
             serial.close();
             continue;
         }
-        QByteArray rx;
-        if (readBytes(rx)){
+        QByteArray rx = readBytes();
+        if (!rx.isEmpty()){
             const uint8_t *data =
                 reinterpret_cast<const uint8_t*>(rx.constData());
 
@@ -57,18 +60,14 @@ bool Connection::findDevice()
             if (rx.size() >= 3)
             {
             if (data[0] == 0xAA &&
-                data[1] == 0x55 &&
-                data[2] == 0x81)
-            {
-                portIsOpen=true;
-                qDebug() << "Подключение установлено";
-                return true;
-            }
-            if (data[0] == 0xAA &&
                 data[1] == 0x55)
             {
                 portIsOpen=true;
-                qDebug() << "Подключение установлено, камера не подключена";
+                qDebug() << "Подключение установлено";
+                if (data[2] == 0xEE)
+                {
+                    emit errorMsg(data[6]);
+                }
                 return true;
             }
             }
@@ -84,36 +83,66 @@ bool Connection::sendBytes(const uint8_t *data, int size)
 {
     if (!serial.isOpen())
         return false;
-    qDebug() << "отправляем1";
     serial.clear(QSerialPort::Input);
     qint64 written =
         serial.write(reinterpret_cast<const char*>(data), size);
 
     if (written != size)
         return false;
-
-    qDebug() << "отправляем2";
     return serial.waitForBytesWritten(300);
 }
 
-bool Connection::readBytes(QByteArray &buffer)
+QByteArray Connection::readBytes()
 {
     if (!serial.isOpen())
-        return false;
-
-    buffer.clear();
+        return {};
 
     if (!serial.waitForReadyRead(10500))
-        return false;
+        return {};
 
-    buffer += serial.readAll();
+    QByteArray buffer = serial.readAll();
+
     while (serial.waitForReadyRead(200))
     {
         buffer += serial.readAll();
     }
-    qDebug() << buffer.toHex(' ').toUpper();
-    return !buffer.isEmpty();
+
+    qDebug() << "readBytes(): " << buffer .toHex(' ').toUpper();
+
+    return buffer;
 }
+std::vector<uint8_t> Connection::getData(const QByteArray &buffer){
+    std::vector<uint8_t> photo;
+    if (buffer.size() < 6)
+        return {};
+    qDebug() << "1";
+    if (static_cast<uint8_t>(buffer[2])==0xEE){
+        emit errorMsg(static_cast<uint8_t>(buffer[6]));
+        qDebug() << "2";
+        return {};
+    }
+    int index = 9;
+    size_t currentSize=0;
+    uint16_t length = static_cast<uint8_t>(buffer[3]) | (static_cast<uint8_t>(buffer[4]) << 8);
+    uint32_t photoLength = static_cast<uint8_t>(buffer[5]) | (static_cast<uint8_t>(buffer[6]) << 8)| (static_cast<uint8_t>(buffer[7]) << 16);
+    photo.resize(photoLength);
+    qDebug() << "3";
+    while(static_cast<uint8_t>(buffer[index+ 3])==0x84){
+        qDebug() << "4";
+        length = static_cast<uint8_t>(buffer[index+4]) | (static_cast<uint8_t>(buffer[index+5]) << 8);
+        memcpy(photo.data()+currentSize,
+               buffer.constData() + index + 7,
+               length);
+        currentSize+=length;
+        index+=length+6;
+    }
+    qDebug() << "5";
+    if (currentSize!=photoLength)
+        emit errorMsg(0x60);
+    qDebug() << "6";
+    return photo;
+}
+
 void Connection::close()
 {
     if (serial.isOpen())

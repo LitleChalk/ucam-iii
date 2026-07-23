@@ -186,6 +186,7 @@ private slots:
     void startAutoRequest();
     void stopAutoRequest();
     void disconnectMessage();
+    void errorMessage(uint8_t errorCode);
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void photoRequest();

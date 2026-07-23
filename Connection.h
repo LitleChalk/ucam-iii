@@ -16,13 +16,15 @@ public:
 
     bool sendBytes(const uint8_t *data, int size);
 
-    bool readBytes(QByteArray &buffer);
+    QByteArray readBytes();
+    std::vector<uint8_t> getData(const QByteArray &buffer);
 
     void close();
 
     bool portIsOpen;
 signals:
     void portDisconnected();
+    void errorMsg(uint8_t errorCode);
 private slots:
     void handleError(QSerialPort::SerialPortError error);
 private:
