@@ -36,56 +36,42 @@ bool Connection::findDevice()
 
         if (!serial.open(QIODevice::ReadWrite))
             continue;
-
         serial.clear();
-
-        // Отправляем 0xAA
-        uint8_t tx = 0xAA;
-
-        if (serial.write(reinterpret_cast<char*>(&tx), 1) != 1)
+        uint8_t Handshake[] =
+            {
+                0xAA,
+                0x01,
+                0x00
+            };
+        if (!sendBytes(Handshake, 3))
         {
             serial.close();
             continue;
         }
-
-        if (!serial.waitForBytesWritten(10))
-        {
-            serial.close();
-            continue;
-        }
-
-        if (!serial.waitForReadyRead(300))
-        {
-            serial.close();
-            continue;
-        }
-
         QByteArray rx;
-
-        while (serial.waitForReadyRead(100))
-        {
-            rx += serial.readAll();
-        }
-
-        //const uint8_t* data = reinterpret_cast<const uint8_t*>(rx.constData());
-
-
-        if (!rx.isEmpty())
-        {
-            const uint8_t* data =
+        if (readBytes(rx)){
+            const uint8_t *data =
                 reinterpret_cast<const uint8_t*>(rx.constData());
 
-            qDebug() << "Received" << rx.size() << "bytes:";
-
-            for (int i = 0; i < rx.size(); ++i)
+            qDebug() << "RX:" << rx.toHex(' ').toUpper();
+            if (rx.size() >= 3)
             {
-                qDebug().noquote()
-                << QString("%1")
-                        .arg(data[i], 2, 16, QChar('0'))
-                        .toUpper();
+            if (data[0] == 0xAA &&
+                data[1] == 0x55 &&
+                data[2] == 0x81)
+            {
+                portIsOpen=true;
+                qDebug() << "Подключение установлено";
+                return true;
             }
-            portIsOpen=true;
-            return true;
+            if (data[0] == 0xAA &&
+                data[1] == 0x55)
+            {
+                portIsOpen=true;
+                qDebug() << "Подключение установлено, камера не подключена";
+                return true;
+            }
+            }
         }
 
         serial.close();
@@ -98,6 +84,7 @@ bool Connection::sendBytes(const uint8_t *data, int size)
 {
     if (!serial.isOpen())
         return false;
+    qDebug() << "отправляем1";
     serial.clear(QSerialPort::Input);
     qint64 written =
         serial.write(reinterpret_cast<const char*>(data), size);
@@ -105,6 +92,7 @@ bool Connection::sendBytes(const uint8_t *data, int size)
     if (written != size)
         return false;
 
+    qDebug() << "отправляем2";
     return serial.waitForBytesWritten(300);
 }
 
@@ -115,20 +103,17 @@ bool Connection::readBytes(QByteArray &buffer)
 
     buffer.clear();
 
-    // Ждем первый байт ответа
-    if (!serial.waitForReadyRead(100))
+    if (!serial.waitForReadyRead(10500))
         return false;
 
-    // Забираем все, что пришло
-    while (serial.waitForReadyRead(20))
+    buffer += serial.readAll();
+    while (serial.waitForReadyRead(200))
     {
         buffer += serial.readAll();
-
     }
-
+    qDebug() << buffer.toHex(' ').toUpper();
     return !buffer.isEmpty();
 }
-
 void Connection::close()
 {
     if (serial.isOpen())
