@@ -167,11 +167,11 @@ Widget::Widget(Connection *connection, QWidget *parent)
         object_info_title = new QLabel("Сохраняемая информация");
         camera_number_label = new QLabel("Номер камеры");
         batch_number_label = new QLabel("Номер партии");
-        reset_id_label = new QLabel("Частота обновления ID");
+        //reset_id_label = new QLabel("Частота обновления ID");
 
         camera_number_input = new QLineEdit();
         batch_number_input = new QLineEdit();
-        reset_id_combo = new QComboBox();
+        //reset_id_combo = new QComboBox();
 
         auto_mode_title = new QLabel("Автоматический режим");
         polling_frequency_label = new QLabel("Частота опроса (сек)");
@@ -204,8 +204,8 @@ Widget::Widget(Connection *connection, QWidget *parent)
         object_info_grid->addWidget(batch_number_label, 1, 0);
         object_info_grid->addWidget(batch_number_input, 1, 1);
 
-        object_info_grid->addWidget(reset_id_label, 2, 0);
-        object_info_grid->addWidget(reset_id_combo, 2, 1);
+        //object_info_grid->addWidget(reset_id_label, 2, 0);
+        //object_info_grid->addWidget(reset_id_combo, 2, 1);
 
         object_info_layout->addWidget(object_info_title);
         object_info_layout->addLayout(object_info_grid);
@@ -285,10 +285,10 @@ Widget::Widget(Connection *connection, QWidget *parent)
         //параметры подписей
         camera_number_label->setMinimumWidth(180);
         batch_number_label->setMinimumWidth(180);
-        reset_id_label->setMinimumWidth(180);
+        //reset_id_label->setMinimumWidth(180);
         //параметры выпадающих списков
-        reset_id_combo->addItem("Каждую партию");
-        reset_id_combo->addItem("Каждый день");
+        //reset_id_combo->addItem("Каждую партию");
+        //reset_id_combo->addItem("Каждый день");
 
         tracked_objects_combo->addItem("Все");
         tracked_objects_combo->addItem("Успешные");
@@ -314,7 +314,7 @@ Widget::Widget(Connection *connection, QWidget *parent)
         camera_number_input->setMinimumWidth(150);
         batch_number_input->setMinimumWidth(150);
 
-        reset_id_combo->setMinimumWidth(150);
+        //reset_id_combo->setMinimumWidth(150);
 
         save_settings_button->setMinimumHeight(30);
         set_default_settings_button->setMinimumHeight(30);
@@ -336,7 +336,7 @@ Widget::Widget(Connection *connection, QWidget *parent)
     current_ID=settings.value("id").toInt();
     settings.sync();
     DisplayCurrentSettings();
-    reset_id_combo->setEnabled(false);
+    //reset_id_combo->setEnabled(false);
     tracked_objects_combo->setEnabled(false);
     data_format_combo->setEnabled(false);
     resolution_combo->setEnabled(false);
@@ -397,7 +397,7 @@ void Widget::ChangeSettings(){
     }
     settings.setValue("camera_number", this->camera_number_input->text());
     settings.setValue("batch_number", batch_number);
-    settings.setValue("reset_ID", this->reset_id_combo->currentText());
+    //settings.setValue("reset_ID", this->reset_id_combo->currentText());
     settings.setValue("polling_frequency", pollingFrequency);
     settings.setValue("tracked_objects", this->tracked_objects_combo->currentText());
     settings.setValue("data_format", this->data_format_combo->currentText());
@@ -419,7 +419,7 @@ void Widget::DisplayCurrentSettings(const QString &fileName) // default fileName
     if (settings.contains("polling_frequency"))
         polling_frequency_input->setText(settings.value("polling_frequency").toString());
 
-    LoadComboFromSettings(settings, "reset_ID", reset_id_combo);
+    //LoadComboFromSettings(settings, "reset_ID", reset_id_combo);
     LoadComboFromSettings(settings, "tracked_objects", tracked_objects_combo);
     LoadComboFromSettings(settings, "data_format", data_format_combo);
     LoadComboFromSettings(settings, "resolution", resolution_combo);
@@ -657,6 +657,17 @@ void Widget::startAutoRequest()
 
     if (!settings.contains("polling_frequency")) {
         QMessageBox::warning(this, "Ошибка", "В файле отсутствует параметр частоты опроса.");
+        return;
+    }
+
+    if (!port.portIsOpen)
+        port.findDevice();
+    if (!port.portIsOpen){
+        QMessageBox::critical(
+            this,
+            "Ошибка",
+            "Не удалось установить подключение."
+            );
         return;
     }
 

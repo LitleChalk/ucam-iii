@@ -131,7 +131,7 @@ private:
     QLabel
         *camera_number_label,
         *batch_number_label,
-        *reset_id_label,
+        //*reset_id_label,
         *polling_frequency_label,
         *save_objects_label,
         *resolution_label,
@@ -143,7 +143,7 @@ private:
         *polling_frequency_input;
 
     QComboBox
-        *reset_id_combo,
+        //*reset_id_combo,
         *tracked_objects_combo,
         *data_format_combo,
         *resolution_combo,
