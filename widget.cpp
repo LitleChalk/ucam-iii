@@ -195,7 +195,7 @@ Widget::Widget(Connection *connection, QWidget *parent)
         settings_content->setLayout(settings_layout);
         //параметры сохранения
         object_info_grid->setAlignment(Qt::AlignLeft);
-        object_info_grid->setColumnStretch(2, 1);
+        object_info_grid->setColumnStretch(3, 1);
         object_info_grid->setHorizontalSpacing(15);
 
         object_info_grid->addWidget(camera_number_label, 0, 0);
@@ -203,6 +203,10 @@ Widget::Widget(Connection *connection, QWidget *parent)
 
         object_info_grid->addWidget(batch_number_label, 1, 0);
         object_info_grid->addWidget(batch_number_input, 1, 1);
+
+        object_info_grid->addWidget(save_objects_label,2,0);
+        object_info_grid->addWidget(tracked_objects_combo,2,1);
+        object_info_grid->addWidget(data_format_combo,2,2);
 
         //object_info_grid->addWidget(reset_id_label, 2, 0);
         //object_info_grid->addWidget(reset_id_combo, 2, 1);
@@ -222,9 +226,6 @@ Widget::Widget(Connection *connection, QWidget *parent)
         auto_mode_grid->addWidget(polling_frequency_label,0,0);
         auto_mode_grid->addWidget(polling_frequency_input,0,1,1,2);
 
-        auto_mode_grid->addWidget(save_objects_label,1,0);
-        auto_mode_grid->addWidget(tracked_objects_combo,1,1);
-        auto_mode_grid->addWidget(data_format_combo,1,2);
 
         auto_mode_layout->addWidget(auto_mode_title);
         auto_mode_layout->addLayout(auto_mode_grid);
@@ -290,12 +291,12 @@ Widget::Widget(Connection *connection, QWidget *parent)
         //reset_id_combo->addItem("Каждую партию");
         //reset_id_combo->addItem("Каждый день");
 
-        tracked_objects_combo->addItem("Все");
+        tracked_objects_combo->addItem("Все объекты");
         tracked_objects_combo->addItem("Успешные");
         tracked_objects_combo->addItem("Бракованные");
 
         data_format_combo->addItem("Инфо");
-        data_format_combo->addItem("Фото");
+        //data_format_combo->addItem("Фото");
         data_format_combo->addItem("Инфо+фото");
 
         resolution_combo->addItem("80x60");
@@ -338,7 +339,7 @@ Widget::Widget(Connection *connection, QWidget *parent)
     DisplayCurrentSettings();
     //reset_id_combo->setEnabled(false);
     tracked_objects_combo->setEnabled(false);
-    data_format_combo->setEnabled(false);
+    //data_format_combo->setEnabled(false);
     resolution_combo->setEnabled(false);
     photo_format_combo->setEnabled(false);
 }
@@ -405,6 +406,9 @@ void Widget::ChangeSettings(){
     settings.setValue("format", this->photo_format_combo->currentText());
 
     settings.sync();
+    if (port.portIsOpen){
+        port.setResolution(resolution_combo->currentText());
+    }
 }
 void Widget::DisplayCurrentSettings(const QString &fileName) // default fileName = "settings.ini"
 {
@@ -454,8 +458,10 @@ void Widget::UpdateResolutionCombo()
     resolution_combo->setCurrentIndex(0);
 }
 void Widget::photoRequest(){
-    if (!port.portIsOpen)
+    if (!port.portIsOpen){
         port.findDevice();
+        port.setResolution(resolution_combo->currentText());
+    }
     if (!port.portIsOpen){
         QMessageBox::critical(
             this,
@@ -660,8 +666,9 @@ void Widget::startAutoRequest()
         return;
     }
 
-    if (!port.portIsOpen)
+    if (!port.portIsOpen){
         port.findDevice();
+        port.setResolution(resolution_combo->currentText());}
     if (!port.portIsOpen){
         QMessageBox::critical(
             this,
@@ -738,7 +745,7 @@ void Widget::errorMessage(uint8_t errorCode){
     QString errorText;
     switch(errorCode){
     case 0xE3:
-        errorText = QString("Ошибка (%1) ERR_CAM_NOT_SYNC").arg(errorCode, 2, 16, QLatin1Char('0')).toUpper();
+        errorText = QString("Ошибка (%1) ERR_CAM_NO").arg(errorCode, 2, 16, QLatin1Char('0')).toUpper();
         break;
     case 0x60:
         errorText = QString("Ошибка (%1). Фото повреждено.").arg(errorCode, 2, 16, QLatin1Char('0'));

@@ -40,6 +40,8 @@ bool Connection::findDevice()
     continue;
 }
         serial.clear();
+//portIsOpen=true;
+//return true;
         uint8_t Handshake[] =
             {
                 0xAA,
@@ -56,8 +58,8 @@ bool Connection::findDevice()
             const uint8_t *data =
                 reinterpret_cast<const uint8_t*>(rx.constData());
 
-            qDebug() << "RX:" << rx.toHex(' ').toUpper();
-            if (rx.size() >= 3)
+            //qDebug() << "RX:" << rx.toHex(' ').toUpper();
+            if (rx.size() >= 6)
             {
             if (data[0] == 0xAA &&
                 data[1] == 0x55)
@@ -68,6 +70,7 @@ bool Connection::findDevice()
                 {
                     emit errorMsg(data[6]);
                 }
+
                 return true;
             }
             }
@@ -78,11 +81,63 @@ bool Connection::findDevice()
 
     return false;
 }
+bool Connection::setResolution(const QString &resolution){
+    uint8_t resolutionByte;
+    if (resolution == "80x60")
+        resolutionByte = 0x01;
+    else if (resolution == "160x120")
+        resolutionByte = 0x03;
+    else if (resolution == "128x128")
+        resolutionByte = 0x09;
+    else if (resolution == "128x96")
+        resolutionByte = 0x0B;
+    else {
+        qDebug() << "Неверное разрешение: " << resolution;
+        emit errorMsg(0x00);
+        return false;
+    }
+    uint8_t command[] =
+        {
+            0xAA,
+            0x02,
+            resolutionByte
+        };
+    sendBytes(command, 3);
+    //if(sendBytes(command, 3))
+        //qDebug() << "TX: AA 02 " << QString("%1").arg(resolutionByte, 2, 16, QChar('0')).toUpper();
+    QByteArray rx = readBytes();
+    if (!rx.isEmpty()){
+        const uint8_t *data =
+            reinterpret_cast<const uint8_t*>(rx.constData());
+        //qDebug() << "RX:" << rx.toHex(' ').toUpper();
+        if (rx.size() >= 6)
+        {
+            if (data[0] == 0xAA &&
+                data[1] == 0x55)
+            {
+                if (data[2] == 0x82){
+                    qDebug() << "Разрешение установлено";
+                    return true;
+                }
+                if (data[2] == 0xEE)
+                {
+                    qDebug() << "Ошибка при установке разрешения" << data[6];
+                    emit errorMsg(data[6]);
+                    return false;
+                }
+            }
+        }
+    }
+    emit errorMsg(0x00);
+    return false;
+}
 
 bool Connection::sendBytes(const uint8_t *data, int size)
 {
     if (!serial.isOpen())
         return false;
+    QByteArray ba = QByteArray::fromRawData(reinterpret_cast<const char*>(data), size);
+    qDebug() << "TX:" << ba.toHex(' ').toUpper();
     serial.clear(QSerialPort::Input);
     qint64 written =
         serial.write(reinterpret_cast<const char*>(data), size);
@@ -107,7 +162,7 @@ QByteArray Connection::readBytes()
         buffer += serial.readAll();
     }
 
-    qDebug() << "readBytes(): " << buffer .toHex(' ').toUpper();
+    qDebug() << "RX:" << buffer .toHex(' ').toUpper();
 
     return buffer;
 }
@@ -124,17 +179,18 @@ std::vector<uint8_t> Connection::getData(const QByteArray &buffer){
     int index = 9;
     size_t currentSize=0;
     uint16_t length = static_cast<uint8_t>(buffer[3]) | (static_cast<uint8_t>(buffer[4]) << 8);
-    uint32_t photoLength = static_cast<uint8_t>(buffer[5]) | (static_cast<uint8_t>(buffer[6]) << 8)| (static_cast<uint8_t>(buffer[7]) << 16);
+    uint32_t photoLength = static_cast<uint8_t>(buffer[5]) | (static_cast<uint8_t>(buffer[6]) << 8)| (static_cast<uint8_t>(buffer[7]) << 16)| (static_cast<uint8_t>(buffer[8]) << 24);
     photo.resize(photoLength);
     qDebug() << "3";
     while(static_cast<uint8_t>(buffer[index+ 3])==0x84){
         qDebug() << "4";
-        length = static_cast<uint8_t>(buffer[index+4]) | (static_cast<uint8_t>(buffer[index+5]) << 8);
+        length = static_cast<uint8_t>(buffer[index+5]) | (static_cast<uint8_t>(buffer[index+6]) << 8);
         memcpy(photo.data()+currentSize,
-               buffer.constData() + index + 7,
+               buffer.constData() +  index + 7,
                length);
         currentSize+=length;
         index+=length+6;
+        qDebug() << "4_2";
     }
     qDebug() << "5";
     if (currentSize!=photoLength)

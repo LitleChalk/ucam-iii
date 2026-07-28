@@ -13,6 +13,7 @@ public:
     ~Connection();
 
     bool findDevice();
+    bool setResolution(const QString &resolution);
 
     bool sendBytes(const uint8_t *data, int size);
 
