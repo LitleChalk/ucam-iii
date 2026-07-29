@@ -34,14 +34,14 @@ bool Connection::findDevice()
         serial.setStopBits(QSerialPort::OneStop);
         serial.setFlowControl(QSerialPort::NoFlowControl);
         if (!serial.open(QIODevice::ReadWrite)){
-    qDebug() << "Open failed:"
+            qDebug() << "Open failed:"
              << serial.error()
              << serial.errorString();
-    continue;
-}
+            continue;
+        }
         serial.clear();
-//portIsOpen=true;
-//return true;
+        //portIsOpen=true;
+        //return true;
         uint8_t Handshake[] =
             {
                 0xAA,
@@ -170,32 +170,33 @@ std::vector<uint8_t> Connection::getData(const QByteArray &buffer){
     std::vector<uint8_t> photo;
     if (buffer.size() < 6)
         return {};
-    qDebug() << "1";
+    //qDebug() << "1";
     if (static_cast<uint8_t>(buffer[2])==0xEE){
         emit errorMsg(static_cast<uint8_t>(buffer[6]));
-        qDebug() << "2";
+        //qDebug() << "2";
         return {};
     }
     int index = 9;
     size_t currentSize=0;
-    uint16_t length = static_cast<uint8_t>(buffer[3]) | (static_cast<uint8_t>(buffer[4]) << 8);
-    uint32_t photoLength = static_cast<uint8_t>(buffer[5]) | (static_cast<uint8_t>(buffer[6]) << 8)| (static_cast<uint8_t>(buffer[7]) << 16)| (static_cast<uint8_t>(buffer[8]) << 24);
+    uint16_t length = static_cast<uint8_t>(buffer[4]) | (static_cast<uint8_t>(buffer[5]) << 8);
+    uint32_t photoLength = static_cast<uint8_t>(buffer[6]) | (static_cast<uint8_t>(buffer[7]) << 8)| (static_cast<uint8_t>(buffer[8]) << 16)| (static_cast<uint8_t>(buffer[9]) << 24);
     photo.resize(photoLength);
-    qDebug() << "3";
+    //qDebug() << "3";
     while(static_cast<uint8_t>(buffer[index+ 3])==0x84){
-        qDebug() << "4";
+        //qDebug() << "4";
         length = static_cast<uint8_t>(buffer[index+5]) | (static_cast<uint8_t>(buffer[index+6]) << 8);
         memcpy(photo.data()+currentSize,
                buffer.constData() +  index + 7,
                length);
         currentSize+=length;
         index+=length+6;
-        qDebug() << "4_2";
+        //qDebug() << "4_2";
     }
-    qDebug() << "5";
-    if (currentSize!=photoLength)
-        emit errorMsg(0x60);
-    qDebug() << "6";
+    //qDebug() << "5";
+    if (currentSize!=photoLength){
+        qDebug() << currentSize << photoLength;
+        emit errorMsg(0x60);}
+    //qDebug() << "6";
     return photo;
 }
 
